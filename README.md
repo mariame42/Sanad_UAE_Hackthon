@@ -3,63 +3,52 @@
 **Early help, without labels.**
 
 Early Learning Support & Referral Platform for TDRA UAE Hackathon 2026 —
-Challenge Profile 20 (Zayed University): *Early Identification of Learning Support Needs*.
-
-Sanad helps students, frontline staff, and Student Accessibility Services (SAS)
-notice learning barriers early and route them to the right support. Students give
-consent at every step. AI never diagnoses. Every case has a named human owner.
+Challenge Profile 20 (Zayed University).
 
 ## Tech stack
 
-| Layer | Choice |
-| --- | --- |
-| App | Next.js (App Router) + TypeScript |
-| UI | Tailwind CSS |
-| Charts | Recharts (analytics later) |
-| AI | LLM API (assistive drafting only) |
-| Tasks | Makefile |
+Next.js · Tailwind CSS · Recharts · LLM API · Makefile
 
 ## Getting started
 
 ```bash
-make install   # npm install
-cp .env.example .env.local   # add LLM keys when ready
-make dev       # http://localhost:3000
+make install
+cp .env.example .env.local   # optional LLM_API_KEY
+make dev
 ```
 
-Other targets: `make build`, `make start`, `make lint`, `make clean`.
+## Demo roles
 
-## Folder structure
+Use the header role switcher (or `/role`):
 
-```
-src/
-  app/                  # routes & API
-    api/llm/            # LLM endpoint (stub)
-    page.tsx            # welcome page
-  components/
-    welcome/            # welcome UI
-    ui/                 # shared UI (later)
-  features/
-    check-in/           # Learning Check-in
-    concern-intake/     # Concern Intake (staff)
-    sas-triage/         # SAS Triage Console
-    analytics/          # Continuity & Learning Loop
-  lib/
-    llm/                # LLM client helpers
-    types/
-  hooks/
-```
+| Role | Start at |
+| --- | --- |
+| Student | `/check-in`, `/my-case` |
+| Faculty | `/concern`, `/class-insights` |
+| Advisor / SAS | `/cases` |
+| Leadership | `/dashboard` |
 
-Design docs at the repo root: `challenge.md`, `Sanad_Project_Description.md`.
+Language toggle (EN/AR + RTL) and dark mode are in the header.
 
-## Principles (non-negotiable)
+## Demo script (3 min)
 
-- No diagnosis or individual risk scores
-- No surveillance — signals come from people, with consent
-- No labels for students — strategies and options only
-- Humans decide; AI suggests and routes
-- No sharing without consent (except existing safety protocols)
+1. Faculty → Concern Desk → Language Guard → recommend Check-in to class  
+2. Student → Check-in (quick path) → strategies → Talk to a coach  
+3. Advisor → Cases → confirm route / assign owner  
+4. Student → My case → I disagree  
+5. Leadership → Dashboard  
+6. Principles → `/principles`
 
-## Current status
+## Routes
 
-Welcome page only. Feature modules are scaffolded empty for the next build steps.
+- `/` welcome  
+- `/role` role picker  
+- `/check-in` Learning Check-in (7 activities)  
+- `/concern` Concern Desk + Language Guard  
+- `/cases` Case Hub  
+- `/my-case` Student tracker + recourse  
+- `/dashboard` Outcomes & Equity  
+- `/class-insights` Course-level patterns  
+- `/principles` What Sanad never does  
+
+LLM assistive drafting: `POST /api/llm` (`language_guard`, `route_suggest`, `handoff_summary`) with offline fallbacks.

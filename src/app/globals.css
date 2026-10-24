@@ -28,6 +28,29 @@ body {
   color: var(--foreground);
 }
 
+:focus-visible {
+  outline: 2px solid #1f7a7a;
+  outline-offset: 2px;
+}
+
+.sanad-wide {
+  letter-spacing: 0.04em;
+  line-height: 1.85;
+  word-spacing: 0.12em;
+}
+
+.sanad-dyslexia {
+  font-family: "Comic Sans MS", "OpenDyslexic", var(--font-body), sans-serif;
+  letter-spacing: 0.05em;
+  line-height: 1.7;
+}
+
+.sanad-chunk p + p {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
 @keyframes welcome-fade-up {
   from {
     opacity: 0;

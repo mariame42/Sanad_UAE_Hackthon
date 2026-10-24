@@ -1,6 +1,12 @@
+"use client";
+
+import Link from "next/link";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { HeroIllustration } from "./HeroIllustration";
 
 export function WelcomeHero() {
+  const { t, locale } = useLocale();
+
   return (
     <section
       id="home"
@@ -15,25 +21,22 @@ export function WelcomeHero() {
         </p>
 
         <h1 className="mt-3 text-4xl font-bold tracking-tight text-[#0F3D3E] sm:text-5xl lg:text-6xl dark:text-[#E8F0EF]">
-          Sanad
+          {locale === "ar" ? "سند" : "Sanad"}
         </h1>
 
         <p className="mt-3 text-xl font-medium text-slate-500 sm:text-2xl dark:text-slate-400">
-          Early help, without labels.
+          {t.tagline}
         </p>
 
         <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-300">
-          Sanad helps students, frontline staff and Student Accessibility
-          Services (SAS) notice learning barriers early and route them to the
-          right support. Students give consent at every step and never receive
-          a diagnosis.
+          {t.welcomeBody}
         </p>
 
-        <a
-          href="#support"
+        <Link
+          href="/role"
           className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#0F3D3E] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#164B4C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F7A7A] dark:bg-[#4DB3B0] dark:text-[#0B1615] dark:hover:bg-[#5FC4C1]"
         >
-          Get Started
+          {t.getStarted}
           <svg
             viewBox="0 0 24 24"
             className="h-5 w-5"
@@ -46,7 +49,7 @@ export function WelcomeHero() {
           >
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
-        </a>
+        </Link>
       </div>
 
       <div className="order-1 lg:order-2">

@@ -1,6 +1,9 @@
+import Link from "next/link";
+
 const features = [
   {
     n: "01",
+    href: "/check-in",
     title: "Learning Check-in",
     body: "Students try short learning activities and discover which tools help them learn better.",
     bg: "bg-[#F3EEF9] dark:bg-[#2A2438]",
@@ -16,6 +19,7 @@ const features = [
   },
   {
     n: "02",
+    href: "/concern",
     title: "Concern Desk",
     body: "Faculty and tutors describe what they observe. AI rewrites notes into objective, non-diagnostic language.",
     bg: "bg-[#EAF2FB] dark:bg-[#1E2A38]",
@@ -32,6 +36,7 @@ const features = [
   },
   {
     n: "03",
+    href: "/cases",
     title: "Referral & Case Hub",
     body: "AI suggests the right support service. A human makes the final decision.",
     bg: "bg-[#E8F5EF] dark:bg-[#1A2E28]",
@@ -48,6 +53,7 @@ const features = [
   },
   {
     n: "04",
+    href: "/class-insights",
     title: "Class Insights",
     body: "Faculty see anonymous class-level learning patterns to improve teaching for everyone.",
     bg: "bg-[#FBF0E8] dark:bg-[#2E241C]",
@@ -61,6 +67,7 @@ const features = [
   },
   {
     n: "05",
+    href: "/dashboard",
     title: "Dashboard",
     body: "University leadership tracks support effectiveness, waiting times and fairness.",
     bg: "bg-[#E8F4F6] dark:bg-[#1A2C30]",
@@ -102,8 +109,8 @@ export function HowSanadHelps() {
               <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 {f.body}
               </p>
-              <button
-                type="button"
+              <Link
+                href={f.href}
                 className={`mt-5 inline-flex h-10 w-10 items-center justify-center rounded-xl transition ${f.btn}`}
                 aria-label={`Open ${f.title}`}
               >
@@ -119,7 +126,7 @@ export function HowSanadHelps() {
                 >
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
-              </button>
+              </Link>
             </article>
           ))}
         </div>
