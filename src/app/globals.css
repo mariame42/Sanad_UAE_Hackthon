@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (not prefers-color-scheme) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f9fbfc;
+  --foreground: #0f3d3e;
+  --sanad-teal: #1f7a7a;
+  --sanad-deep: #0f3d3e;
+}
+
+.dark {
+  --background: #0b1615;
+  --foreground: #e8f0ef;
+  --sanad-teal: #4db3b0;
+  --sanad-deep: #e8f0ef;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@keyframes welcome-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes welcome-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.welcome-fade {
+  animation: welcome-fade-up 0.7s ease-out both;
+}
+
+.welcome-fade-delay {
+  animation: welcome-fade-up 0.85s ease-out 0.12s both;
+}
+
+.welcome-float {
+  animation: welcome-float 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-fade,
+  .welcome-fade-delay,
+  .welcome-float {
+    animation: none;
+  }
+}
