@@ -94,7 +94,7 @@ export const dictionaries = {
       transcript: "Transcript",
       progress: "Activity",
       footerPause: "Pause any time. You decide what happens with your results at the end.",
-      footerFormats: "Every part has text, audio and captions.",
+      footerFormats: "Read aloud and captions are always available.",
     },
     cases: {
       title: "Referral & Case Hub",
@@ -244,7 +244,7 @@ export const dictionaries = {
       transcript: "النص المكتوب",
       progress: "النشاط",
       footerPause: "توقّف في أي وقت. أنت تقرر ماذا يحدث بنتائجك في النهاية.",
-      footerFormats: "كل جزء فيه نص وصوت وترجمة.",
+      footerFormats: "القراءة بصوت عالٍ والترجمة متاحتان دائماً.",
     },
     cases: {
       title: "مركز الإحالة والحالات",

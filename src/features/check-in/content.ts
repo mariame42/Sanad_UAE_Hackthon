@@ -1,13 +1,12 @@
 export type ActivityId =
   | "read"
-  | "listen"
   | "watch"
   | "timed"
   | "memory"
   | "visual_verbal"
   | "tool_trial";
 
-export type ModeId = "read" | "listen" | "watch";
+export type ModeId = "read" | "watch";
 
 export type Question = {
   id: string;
@@ -47,6 +46,9 @@ export const PASSAGE_CHUNKS_AR = [
   "عندما تنام سبع إلى تسع ساعات بعد الدراسة، تتذكر عادة أكثر مما لو سهرت للمراجعة.",
   "راحة قصيرة قبل الاختبار قد تساعدك على التركيز أكثر من سهرٍ آخر للمذاكرة.",
 ];
+
+/** Portrait (720x1280) clip shown in Watch mode. */
+export const WATCH_VIDEO_SRC = "/videos/How_Sleep_Sorts_Your_Memories.mp4";
 
 export const PASSAGE_EN = PASSAGE_CHUNKS_EN.join(" ");
 export const PASSAGE_AR = PASSAGE_CHUNKS_AR.join(" ");
@@ -133,17 +135,7 @@ export const activities: Activity[] = [
     titleAr: "قراءة",
     bodyEn: PASSAGE_EN,
     bodyAr: PASSAGE_AR,
-    questions: [sharedQuestions[0], sharedQuestions[1]],
-  },
-  {
-    id: "listen",
-    titleEn: "Listen",
-    titleAr: "استماع",
-    bodyEn: PASSAGE_EN,
-    bodyAr: PASSAGE_AR,
-    transcriptEn: PASSAGE_EN,
-    transcriptAr: PASSAGE_AR,
-    questions: [sharedQuestions[2]],
+    questions: [sharedQuestions[0], sharedQuestions[1], sharedQuestions[2]],
   },
   {
     id: "watch",
@@ -256,10 +248,9 @@ export const activities: Activity[] = [
   },
 ];
 
-export const QUICK_IDS: ActivityId[] = ["read", "listen", "watch"];
+export const QUICK_IDS: ActivityId[] = ["read", "watch"];
 export const FULL_IDS: ActivityId[] = [
   "read",
-  "listen",
   "watch",
   "timed",
   "memory",
@@ -278,13 +269,6 @@ export const JOURNEY_STEPS: {
     id: "read",
     labelEn: "Read",
     labelAr: "قراءة",
-    hintEn: "About 3 minutes",
-    hintAr: "نحو 3 دقائق",
-  },
-  {
-    id: "listen",
-    labelEn: "Listen",
-    labelAr: "استماع",
     hintEn: "About 3 minutes",
     hintAr: "نحو 3 دقائق",
   },

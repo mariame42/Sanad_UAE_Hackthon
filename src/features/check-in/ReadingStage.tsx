@@ -1,6 +1,6 @@
 "use client";
 
-import type { ModeId } from "./content";
+import { WATCH_VIDEO_SRC, type ModeId } from "./content";
 import { AudioPlayerBar } from "./AudioPlayerBar";
 
 type Props = {
@@ -19,11 +19,12 @@ type Props = {
   onToggleCaptions: () => void;
   slowerSpeech: boolean;
   captionText?: string;
+  onPrevChunk?: () => void;
+  onNextChunk?: () => void;
 };
 
 const MODES: { id: ModeId; en: string; ar: string }[] = [
   { id: "read", en: "Read", ar: "قراءة" },
-  { id: "listen", en: "Listen", ar: "استماع" },
   { id: "watch", en: "Watch", ar: "مشاهدة" },
 ];
 
@@ -43,7 +44,13 @@ export function ReadingStage({
   onToggleCaptions,
   slowerSpeech,
   captionText,
+  onPrevChunk,
+  onNextChunk,
 }: Props) {
+  const dyslexia = bodyClass.includes("sanad-dyslexia");
+  const readingFont = dyslexia ? "" : "font-[family-name:var(--font-reading)]";
+  const ar = locale === "ar";
+
   return (
     <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-700 dark:bg-slate-900">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -51,7 +58,7 @@ export function ReadingStage({
         <div
           className="inline-flex rounded-full bg-slate-100 p-1 dark:bg-slate-800"
           role="tablist"
-          aria-label={locale === "ar" ? "طريقة العرض" : "How you take this part"}
+          aria-label={ar ? "طريقة العرض" : "How you take this part"}
         >
           {MODES.map((m) => {
             const selected = mode === m.id;
@@ -68,70 +75,101 @@ export function ReadingStage({
                     : "text-slate-500 hover:text-[var(--sanad-indigo)] dark:hover:text-white"
                 }`}
               >
-                {locale === "ar" ? m.ar : m.en}
+                {ar ? m.ar : m.en}
               </button>
             );
           })}
         </div>
       </div>
 
-      <h1 className="mt-5 font-[family-name:var(--font-reading)] text-2xl font-semibold leading-snug text-[var(--sanad-indigo)] sm:text-3xl dark:text-[#E8ECF8]">
+      <h1
+        className={`mt-5 ${readingFont} text-2xl font-semibold leading-snug text-[var(--sanad-indigo)] sm:text-3xl dark:text-[#E8ECF8] ${dyslexia ? bodyClass : ""}`}
+      >
         {title}
       </h1>
 
       {mode === "watch" ? (
-        <div
-          className="mt-6 flex aspect-video items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--sanad-indigo)] to-[var(--sanad-sea)] text-center text-white"
-          role="img"
-          aria-label={
-            locale === "ar" ? "مقطع قصير عن النوم والذاكرة" : "Short clip about sleep and memory"
-          }
-        >
-          <p className="max-w-md px-6 text-lg font-semibold sm:text-xl">
-            {locale === "ar"
-              ? "احتياجات مختلفة. أهداف واحدة. الراحة جزء من التعلّم."
-              : "Different needs. Same goals. Rest is part of how you learn."}
-          </p>
-        </div>
-      ) : null}
-
-      <div className={`mt-6 space-y-1 ${bodyClass}`}>
-        {chunks.map((chunk, i) => {
-          const isActive = chunking ? i === activeChunk : true;
-          const faded = chunking && !isActive;
-          return (
+        <div className="mt-6">
+          <div className="mx-auto aspect-[9/16] w-full max-w-sm overflow-hidden rounded-2xl bg-black">
+            <video
+              key={WATCH_VIDEO_SRC}
+              className="h-full w-full object-contain"
+              src={WATCH_VIDEO_SRC}
+              width={720}
+              height={1280}
+              controls
+              playsInline
+              preload="metadata"
+              aria-label={
+                ar ? "مقطع قصير عن النوم والذاكرة" : "Short clip about sleep and memory"
+              }
+            />
+          </div>
+          {captionsOn && captionText ? (
             <p
-              key={i}
-              className={`rounded-xl px-4 py-3 font-[family-name:var(--font-reading)] text-base leading-relaxed transition sm:text-lg ${
-                chunking && isActive
-                  ? "sanad-chunk-active text-[var(--sanad-indigo)] dark:text-[#E8ECF8]"
-                  : faded
-                    ? "text-slate-400/80 dark:text-slate-500"
-                    : "text-slate-700 dark:text-slate-200"
-              }`}
+              className={`mx-auto mt-3 max-w-sm rounded-xl bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600 dark:bg-slate-800 dark:text-slate-300 ${bodyClass}`}
             >
-              {chunk}
+              {captionText}
             </p>
-          );
-        })}
-      </div>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <div className={`mt-6 space-y-1 ${bodyClass}`}>
+            {chunks.map((chunk, i) => {
+              const isActive = chunking ? i === activeChunk : true;
+              const faded = chunking && !isActive;
+              return (
+                <p
+                  key={i}
+                  className={`rounded-xl px-4 py-3 ${readingFont} text-base leading-relaxed transition sm:text-lg ${
+                    chunking && isActive
+                      ? "sanad-chunk-active text-[var(--sanad-indigo)] dark:text-[#E8ECF8]"
+                      : faded
+                        ? "text-slate-400/80 dark:text-slate-500"
+                        : "text-slate-700 dark:text-slate-200"
+                  }`}
+                >
+                  {chunk}
+                </p>
+              );
+            })}
+          </div>
 
-      {mode === "listen" || mode === "read" ? (
-        <AudioPlayerBar
-          locale={locale}
-          playing={playing}
-          onToggle={onTogglePlay}
-          captionsOn={captionsOn}
-          onToggleCaptions={onToggleCaptions}
-          slower={slowerSpeech}
-        />
-      ) : null}
+          {chunking && (onPrevChunk || onNextChunk) ? (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={onPrevChunk}
+                disabled={!onPrevChunk || activeChunk <= 0}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-[var(--sanad-indigo)] transition hover:border-[var(--sanad-sea)] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-[#E8ECF8]"
+              >
+                {ar ? "الفقرة السابقة" : "Previous paragraph"}
+              </button>
+              <span className="text-xs text-slate-500">
+                {activeChunk + 1} / {chunks.length}
+              </span>
+              <button
+                type="button"
+                onClick={onNextChunk}
+                disabled={!onNextChunk || activeChunk >= chunks.length - 1}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-[var(--sanad-indigo)] transition hover:border-[var(--sanad-sea)] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-[#E8ECF8]"
+              >
+                {ar ? "الفقرة التالية" : "Next paragraph"}
+              </button>
+            </div>
+          ) : null}
 
-      {captionsOn && captionText && (mode === "listen" || mode === "watch") ? (
-        <p className="mt-3 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-          {captionText}
-        </p>
-      ) : null}
+          <AudioPlayerBar
+            locale={locale}
+            playing={playing}
+            onToggle={onTogglePlay}
+            captionsOn={captionsOn}
+            onToggleCaptions={onToggleCaptions}
+            slower={slowerSpeech}
+          />
+        </>
+      )}
     </section>
   );
 }

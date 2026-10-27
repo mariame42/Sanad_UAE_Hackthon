@@ -51,8 +51,40 @@ html[lang="ar"] body {
   word-spacing: 0.12em;
 }
 
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 .sanad-dyslexia {
-  font-family: "Comic Sans MS", "OpenDyslexic", var(--font-body), sans-serif;
+  font-family: "OpenDyslexic", var(--font-body), sans-serif;
   letter-spacing: 0.05em;
   line-height: 1.7;
 }
@@ -106,17 +138,6 @@ html[lang="ar"] body {
 
 .welcome-float {
   animation: welcome-float 5s ease-in-out infinite;
-}
-
-@keyframes lens-in {
-  from {
-    opacity: 0;
-    filter: blur(4px);
-  }
-  to {
-    opacity: 1;
-    filter: blur(0);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -37,9 +37,8 @@ type Attempt = {
   tools: Tools;
 };
 
-const FORMAT: Partial<Record<ActivityId, "text" | "audio" | "video">> = {
+const FORMAT: Partial<Record<ActivityId, "text" | "video">> = {
   read: "text",
-  listen: "audio",
   watch: "video",
 };
 
@@ -60,8 +59,8 @@ const TOOL_HOWTO: Record<ToolKey, { en: string; ar: string }> = {
     ar: "في Word: تخطيط ← التباعد، أو القارئ الشامل ← تفضيلات النص.",
   },
   dyslexiaFont: {
-    en: "Immersive Reader → Font, or set a clear sans-serif font as default in your LMS.",
-    ar: "القارئ الشامل ← الخط، أو اختر خطاً واضحاً افتراضياً في نظام التعلّم.",
+    en: "Turn on OpenDyslexic in Immersive Reader → Font, or set it as the default font in your LMS.",
+    ar: "فعّل خط OpenDyslexic من القارئ الشامل ← الخط، أو اجعله الخط الافتراضي في نظام التعلّم.",
   },
   chunking: {
     en: "Split readings into short sections and add a one-line summary after each.",
@@ -75,7 +74,7 @@ function accuracy(list: Attempt[]) {
 }
 
 function isModeId(id: ActivityId): id is ModeId {
-  return id === "read" || id === "listen" || id === "watch";
+  return id === "read" || id === "watch";
 }
 
 export function CheckInPlayer() {
@@ -92,6 +91,8 @@ export function CheckInPlayer() {
   const [modeOverride, setModeOverride] = useState<ModeId | null>(null);
   const [activeChunk, setActiveChunk] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [speakNonce, setSpeakNonce] = useState(0);
+  const activeChunkRef = useRef(0);
   const [captionsOn, setCaptionsOn] = useState(true);
   const [tools, setTools] = useState<Tools>({
     tts: true,
@@ -121,7 +122,6 @@ export function CheckInPlayer() {
     }
     if (phase === "results" || phase === "consent" || phase === "done") {
       set.add("read");
-      set.add("listen");
       set.add("watch");
     }
     return set;
@@ -194,32 +194,66 @@ export function CheckInPlayer() {
 
     const formats = (["text", "audio", "video"] as const).map((f) => ({
       format: f,
-      acc: accuracy(attempts.filter((a) => FORMAT[a.id] === f)),
+      acc: accuracy(
+        f === "audio"
+          ? attempts.filter((a) => a.tools.tts)
+          : attempts.filter((a) => FORMAT[a.id] === f),
+      ),
     }));
     const overall = accuracy(attempts) ?? 1;
     return { strategies, formats, persistent: overall < 0.6 };
   }, [attempts, ar, locale]);
   const strategies = insight.strategies;
 
-  useEffect(() => {
-    if (!tools.chunking) return;
-    const id = window.setInterval(() => {
-      setActiveChunk((c) => (c + 1) % chunks.length);
-    }, 5000);
-    return () => window.clearInterval(id);
-  }, [tools.chunking, chunks.length]);
+  // Keep highlight in sync when path context changes (adjust state during render).
+  const chunkContext = `${tools.chunking}|${locale}|${index}`;
+  const [chunkContextKey, setChunkContextKey] = useState(chunkContext);
+  if (chunkContextKey !== chunkContext) {
+    setChunkContextKey(chunkContext);
+    setActiveChunk(0);
+  }
 
   useEffect(() => {
-    if (!playing || !tools.tts) return;
-    const text = chunks.join(" ");
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = locale === "ar" ? "ar-AE" : "en-US";
-    u.rate = tools.slowerSpeech ? 0.75 : 1;
-    u.onend = () => setPlaying(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-    return () => window.speechSynthesis.cancel();
-  }, [playing, tools.tts, tools.slowerSpeech, chunks, locale]);
+    activeChunkRef.current = activeChunk;
+  }, [activeChunk]);
+
+  useEffect(() => {
+    if (!playing || !tools.tts || mode !== "read") return;
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    let cancelled = false;
+    synth.cancel();
+
+    const speakFrom = (i: number) => {
+      if (cancelled) return;
+      if (i >= chunks.length) {
+        setPlaying(false);
+        return;
+      }
+      setActiveChunk(i);
+      const u = new SpeechSynthesisUtterance(chunks[i]);
+      u.lang = locale === "ar" ? "ar-AE" : "en-US";
+      u.rate = tools.slowerSpeech ? 0.75 : 1;
+      u.onend = () => speakFrom(i + 1);
+      u.onerror = () => {
+        if (!cancelled) setPlaying(false);
+      };
+      synth.speak(u);
+    };
+
+    speakFrom(tools.chunking ? activeChunkRef.current : 0);
+    return () => {
+      cancelled = true;
+      synth.cancel();
+    };
+  }, [playing, tools.tts, tools.slowerSpeech, tools.chunking, chunks, locale, mode, speakNonce]);
+
+  function goToChunk(next: number) {
+    const clamped = Math.max(0, Math.min(chunks.length - 1, next));
+    setActiveChunk(clamped);
+    activeChunkRef.current = clamped;
+    if (playing) setSpeakNonce((n) => n + 1);
+  }
 
   function scoreActivity(activityId: ActivityId) {
     const act = activities.find((a) => a.id === activityId)!;
@@ -255,6 +289,9 @@ export function CheckInPlayer() {
   function nextQuestion() {
     if (qIndex + 1 < currentQuestions.length) {
       setQIndex((i) => i + 1);
+      if (tools.chunking && !playing) {
+        setActiveChunk((c) => Math.min(c + 1, chunks.length - 1));
+      }
       return;
     }
     advanceFromActivity();
@@ -279,11 +316,12 @@ export function CheckInPlayer() {
     .filter(Boolean)
     .join(" ");
 
-  const partNumber = Math.min(index + 1, 3);
+  const partTotal = 2;
+  const partNumber = Math.min(index + 1, partTotal);
   const partLabel =
     locale === "ar"
-      ? `الجزء ${partNumber} من 3 — ${topic}`
-      : `Part ${partNumber} of 3 — ${topic}`;
+      ? `الجزء ${partNumber} من ${partTotal} — ${topic}`
+      : `Part ${partNumber} of ${partTotal} — ${topic}`;
 
   if (phase === "intro") {
     return (
@@ -469,27 +507,49 @@ export function CheckInPlayer() {
   }
 
   const showReadingShell = isModeId(current.id);
+  const watchActivity = activities.find((a) => a.id === "watch")!;
   const captionText =
     locale === "ar"
-      ? (current.transcriptAr ?? chunks.join(" "))
-      : (current.transcriptEn ?? chunks.join(" "));
+      ? (watchActivity.transcriptAr ?? chunks.join(" "))
+      : (watchActivity.transcriptEn ?? chunks.join(" "));
+
+  const toolLabels = {
+    title: t.checkIn.tools,
+    hint: t.checkIn.toolsHint,
+    tts: t.checkIn.tts,
+    dyslexiaFont: t.checkIn.dyslexiaFont,
+    spacing: t.checkIn.spacing,
+    chunking: t.checkIn.chunking,
+    slowerSpeech: t.checkIn.slowerSpeech,
+  };
 
   return (
     <div className="sanad-checkin-bg flex min-h-[calc(100vh-5rem)] flex-col">
-      <div className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:px-8">
+      <div className="mx-auto w-[min(100%,80%)] flex-1 px-0 py-6">
         <PrivacyPill locale={locale} />
         <div className="mt-6">
           <JourneyBar locale={locale} current={journeyMode} completed={completed} />
         </div>
 
-        {showReadingShell ? (
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[16.5rem_minmax(0,1.5fr)_minmax(16rem,22rem)]">
+          <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <ToolsPanel
+              locale={locale}
+              tools={tools}
+              onChange={setTools}
+              labels={toolLabels}
+            />
+            <CameraNotice locale={locale} />
+          </div>
+
+          {showReadingShell ? (
             <ReadingStage
               locale={locale}
               mode={mode}
               onModeChange={(m) => {
+                window.speechSynthesis?.cancel();
+                setPlaying(false);
                 setModeOverride(m);
-                if (m === "listen" && tools.tts) setPlaying(true);
               }}
               partLabel={partLabel}
               title={title}
@@ -508,28 +568,13 @@ export function CheckInPlayer() {
               onToggleCaptions={() => setCaptionsOn((c) => !c)}
               slowerSpeech={tools.slowerSpeech}
               captionText={captionText}
+              onPrevChunk={() => goToChunk(activeChunk - 1)}
+              onNextChunk={() => goToChunk(activeChunk + 1)}
             />
-            <div className="space-y-4">
-              <ToolsPanel
-                locale={locale}
-                tools={tools}
-                onChange={setTools}
-                labels={{
-                  title: t.checkIn.tools,
-                  hint: t.checkIn.toolsHint,
-                  tts: t.checkIn.tts,
-                  dyslexiaFont: t.checkIn.dyslexiaFont,
-                  spacing: t.checkIn.spacing,
-                  chunking: t.checkIn.chunking,
-                  slowerSpeech: t.checkIn.slowerSpeech,
-                }}
-              />
-              <CameraNotice locale={locale} />
-            </div>
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]">
-            <section className={`rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${bodyClass}`}>
+          ) : (
+            <section
+              className={`rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${bodyClass}`}
+            >
               <h1 className="text-2xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
                 {locale === "ar" ? current.titleAr : current.titleEn}
               </h1>
@@ -554,47 +599,34 @@ export function CheckInPlayer() {
                 />
               ) : null}
             </section>
-            <div className="space-y-4">
-              <ToolsPanel
-                locale={locale}
-                tools={tools}
-                onChange={setTools}
-                labels={{
-                  title: t.checkIn.tools,
-                  hint: t.checkIn.toolsHint,
-                  tts: t.checkIn.tts,
-                  dyslexiaFont: t.checkIn.dyslexiaFont,
-                  spacing: t.checkIn.spacing,
-                  chunking: t.checkIn.chunking,
-                  slowerSpeech: t.checkIn.slowerSpeech,
-                }}
-              />
-              <CameraNotice locale={locale} />
-            </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {currentQuestion ? (
-        <QuestionBar
-          locale={locale}
-          question={currentQuestion}
-          questionIndex={globalQIndex}
-          questionTotal={flatQuestions.length}
-          selected={answers[currentQuestion.id]}
-          onSelect={(oi) =>
-            setAnswers((prev) => ({ ...prev, [currentQuestion.id]: oi }))
-          }
-          onNext={nextQuestion}
-          nextLabel={
-            globalQIndex + 1 >= flatQuestions.length
-              ? t.checkIn.submit
-              : t.checkIn.nextQuestion
-          }
-          footerLeft={t.checkIn.footerPause}
-          footerRight={t.checkIn.footerFormats}
-        />
-      ) : null}
+          {currentQuestion ? (
+            <QuestionBar
+              locale={locale}
+              question={currentQuestion}
+              questionIndex={globalQIndex}
+              questionTotal={flatQuestions.length}
+              selected={answers[currentQuestion.id]}
+              onSelect={(oi) =>
+                setAnswers((prev) => ({ ...prev, [currentQuestion.id]: oi }))
+              }
+              onNext={nextQuestion}
+              nextLabel={
+                globalQIndex + 1 >= flatQuestions.length
+                  ? t.checkIn.submit
+                  : t.checkIn.nextQuestion
+              }
+              footerLeft={t.checkIn.footerPause}
+              bodyClass={bodyClass}
+            />
+          ) : null}
+        </div>
+
+        <p className="mt-6 text-center text-xs text-slate-400">
+          {t.checkIn.footerFormats}
+        </p>
+      </div>
     </div>
   );
 }
