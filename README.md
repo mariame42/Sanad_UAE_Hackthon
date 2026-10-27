@@ -39,6 +39,23 @@ Language toggle (EN/AR + RTL) and dark mode are in the header.
 5. Leadership → Dashboard  
 6. Principles → `/principles`
 
+### Presenter tools
+
+- **🎬 Demo button** (bottom corner): the script above, one click per step — it
+  switches role and opens the right screen. **Reset demo data** lives there too.
+- **Split screen**: demo data is saved in `localStorage` and syncs between
+  tabs, while the role is per tab. Put Faculty/Advisor in one window and
+  Student in another — changes appear live.
+- No `LLM_API_KEY`? Language Guard, route suggestion and handoff summary fall
+  back to deterministic rules (`src/lib/language-guard.ts`), labelled
+  “Offline rules” in the UI.
+
+## Next big idea
+
+**Diagnose the barrier, not the student** — a student-owned *Learning Passport*
+(evidence of what works instead of a diagnosis) plus a course-level *Barrier
+Map* that fixes obstacles for everyone. See [`docs/IDEAS.md`](docs/IDEAS.md).
+
 ## Routes
 
 - `/` welcome  
