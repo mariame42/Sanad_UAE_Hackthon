@@ -43,7 +43,7 @@ export function CaseDetail() {
 
   if (!record) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-10">
+      <div className="stagger mx-auto max-w-2xl px-5 py-10">
         <p>{t.cases.empty}</p>
       </div>
     );
@@ -92,7 +92,7 @@ export function CaseDetail() {
   const handoff = record.handoffSummary;
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
       <Link href="/cases" className="text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
         ← {t.cases.title}
       </Link>
@@ -153,7 +153,7 @@ export function CaseDetail() {
           <label className="block text-sm font-bold">
             {t.cases.confirm}
             <select
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-white/10 dark:bg-slate-900/70"
               value={decision}
               onChange={(e) => setChosen(e.target.value as RouteOption)}
             >
@@ -185,7 +185,7 @@ export function CaseDetail() {
       ) : null}
 
       {canAct && record.confirmedRoute ? (
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+        <section className="mt-8 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
           <h2 className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
             {ar ? "ملخص التسليم (الحد الأدنى الضروري)" : "Handoff summary (minimum necessary)"}
           </h2>

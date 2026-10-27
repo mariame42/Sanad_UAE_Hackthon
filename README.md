@@ -62,6 +62,8 @@ Story: **diagnose the barrier, not the student** (see [`docs/IDEAS.md`](docs/IDE
 - **Split screen**: demo data is saved in `localStorage` and syncs between
   tabs, while the role is per tab. Put Faculty/Advisor in one window and
   Student in another — changes appear live.
+- **Motion**: page transitions use React `<ViewTransition>` (Chromium/Safari;
+  other browsers just swap pages). Everything respects `prefers-reduced-motion`.
 - No `LLM_API_KEY`? Language Guard, route suggestion and handoff summary fall
   back to deterministic rules (`src/lib/language-guard.ts`), labelled
   “Offline rules” in the UI.

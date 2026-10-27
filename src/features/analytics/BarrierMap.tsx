@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { CountUp, CountUpText } from "@/components/motion/CountUp";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import {
   BARRIER_COURSES,
@@ -44,7 +45,7 @@ export function BarrierMap() {
   const shown = (cell: BarrierCell) => (isFixed(cell) ? RESIDUAL_GAP_PCT : cell.gapPct);
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-5xl px-5 py-10 sm:px-8">
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#1F7A7A] dark:text-[#4DB3B0]">
         {ar ? "شخّص المقرر، لا الطالب" : "Diagnose the course, not the student"}
       </p>
@@ -78,7 +79,7 @@ export function BarrierMap() {
                 {impact.fixed ? (
                   <>
                     <span className="text-xl text-white/50 line-through">{sasWaitDays}</span>{" "}
-                    <span key={impact.projectedWait} className="lens-in inline-block">→ {impact.projectedWait}</span>
+                    <span className="inline-block">→ <CountUp value={impact.projectedWait} /></span>
                   </>
                 ) : (
                   sasWaitDays
@@ -145,7 +146,7 @@ export function BarrierMap() {
                           >
                             {hidden ? "n<10" : `${value}%`}
                             {fixed ? (
-                              <span aria-hidden className="absolute -end-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] text-[#1F7A7A] shadow dark:bg-[#0B1615] dark:text-[#6FD1CB]">
+                              <span aria-hidden className="pop absolute -end-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] text-[#1F7A7A] shadow dark:bg-[#0B1615] dark:text-[#6FD1CB]">
                                 ✓
                               </span>
                             ) : null}
@@ -184,7 +185,7 @@ export function BarrierMap() {
 
         <aside
           aria-live="polite"
-          className="h-fit rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+          className="h-fit rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70"
         >
           {!selected ? (
             <p className="text-sm text-slate-500">
@@ -263,8 +264,8 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs text-white/70">{label}</dt>
-      <dd key={value} className="lens-in text-3xl font-bold tabular-nums">
-        <span dir="ltr" className="inline-block">{value}</span>
+      <dd className="text-3xl font-bold tabular-nums">
+        <span dir="ltr" className="inline-block"><CountUpText text={value} /></span>
       </dd>
     </div>
   );

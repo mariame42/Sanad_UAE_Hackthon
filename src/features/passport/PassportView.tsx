@@ -59,7 +59,7 @@ export function PassportView() {
   const instructor = COURSES.find((c) => c.course === course)!.instructor;
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
         {ar ? "جواز التعلّم" : "My Learning Passport"}
       </h1>
@@ -91,7 +91,7 @@ export function PassportView() {
           </span>
         </div>
 
-        <ul className="relative mt-6 space-y-4">
+        <ul className="stagger relative mt-6 space-y-4">
           {keys.map((k) => {
             const e = passport.evidence[k]!;
             const v = verdict(e);
@@ -117,7 +117,7 @@ export function PassportView() {
         ) : null}
       </section>
 
-      <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+      <section className="mt-8 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
         <h2 className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
           {ar ? "شاركه مع مدرّس" : "Share with an instructor"}
         </h2>
@@ -132,7 +132,7 @@ export function PassportView() {
           <select
             value={course}
             onChange={(e) => setCourse(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-white/10 dark:bg-slate-900/70"
           >
             {COURSES.map((c) => (
               <option key={c.course} value={c.course}>
@@ -221,7 +221,7 @@ export function PassportView() {
           <h2 className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
             {ar ? "مشاركاتي" : "My shares"}
           </h2>
-          <ul className="mt-3 space-y-3">
+          <ul className="stagger mt-3 space-y-3">
             {shares.map((s) => (
               <ShareRow key={s.id} share={s} locale={locale} onRevoke={() => revokeShare(s.id)} />
             ))}
@@ -229,7 +229,7 @@ export function PassportView() {
         </section>
       ) : null}
 
-      <label className="mt-8 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+      <label className="mt-8 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-4 text-sm dark:border-white/10 dark:bg-slate-900/70">
         <input
           type="checkbox"
           checked={passport.contribute}
@@ -262,7 +262,7 @@ function Bar({ label, value, strong }: { label: string; value: number | null; st
       <span className="text-white/80">{label}</span>
       <span className="h-2 overflow-hidden rounded-full bg-white/15">
         <span
-          className={`block h-full rounded-full transition-[width] duration-700 ${strong ? "bg-[#9FD9D6]" : "bg-white/45"}`}
+          className={`grow-x block h-full rounded-full transition-[width] duration-700 ${strong ? "bg-[#9FD9D6]" : "bg-white/45"}`}
           style={{ width: `${pct}%` }}
         />
       </span>
@@ -282,7 +282,7 @@ function ShareRow({
 }) {
   const ar = locale === "ar";
   return (
-    <li className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+    <li className="rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-4 text-sm dark:border-white/10 dark:bg-slate-900/70">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-bold">
           {share.course} · {share.instructor}

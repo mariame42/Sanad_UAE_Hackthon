@@ -34,12 +34,12 @@ export function WelcomeHero() {
 
         <Link
           href="/role"
-          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#0F3D3E] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#164B4C] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F7A7A] dark:bg-[#4DB3B0] dark:text-[#0B1615] dark:hover:bg-[#5FC4C1]"
+          className="group mt-8 inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-[#1A5152] to-[#0F3D3E] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_24px_-10px_rgb(15_61_62/0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-10px_rgb(15_61_62/0.75)] active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F7A7A] dark:bg-[#4DB3B0] dark:text-[#0B1615] dark:hover:bg-[#5FC4C1]"
         >
           {t.getStarted}
           <svg
             viewBox="0 0 24 24"
-            className="h-5 w-5"
+            className="nudge h-5 w-5"
             fill="none"
             stroke="currentColor"
             strokeWidth="2.75"
@@ -52,7 +52,7 @@ export function WelcomeHero() {
         </Link>
       </div>
 
-      <div className="order-1 lg:order-2">
+      <div className="welcome-fade-delay order-1 lg:order-2">
         <HeroIllustration />
       </div>
     </section>

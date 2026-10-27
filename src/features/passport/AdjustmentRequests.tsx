@@ -19,7 +19,7 @@ export function AdjustmentRequests() {
   const mine = shares.filter((s) => s.instructor === me);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
         {ar ? "طلبات التعديل" : "Adjustment requests"}
       </h1>

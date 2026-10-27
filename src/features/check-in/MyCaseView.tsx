@@ -28,7 +28,7 @@ export function MyCaseView() {
 
   if (!record) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8">
+      <div className="stagger mx-auto max-w-2xl px-5 py-10 sm:px-8">
         <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.myCase.title}</h1>
         <p className="mt-4 text-slate-600 dark:text-slate-300">{t.myCase.none}</p>
         {savedCheckIn ? <SavedResults strategies={savedCheckIn.strategies} ar={ar} /> : null}
@@ -50,7 +50,7 @@ export function MyCaseView() {
   const audit = record.audit ?? [];
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-2xl px-5 py-10 sm:px-8">
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.myCase.title}</h1>
       <p className="mt-1 text-sm text-slate-500">
         {ar ? "أنت ترى كل ما يراه الآخرون عنك." : "You can see everything others can see about you."}{" "}
@@ -104,7 +104,7 @@ export function MyCaseView() {
         </section>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+      <div className="mt-6 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-6 dark:border-white/10 dark:bg-slate-900/70">
         <Stepper record={record} ar={ar} />
 
         {record.waitDays && record.status !== "closed" ? (
@@ -146,7 +146,7 @@ export function MyCaseView() {
         ) : null}
       </div>
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900" aria-labelledby="audit-title">
+      <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-6 dark:border-white/10 dark:bg-slate-900/70" aria-labelledby="audit-title">
         <h2 id="audit-title" className="font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
           👁 {ar ? "من اطّلع على ملفي" : "Who viewed my file"}
         </h2>
@@ -181,10 +181,10 @@ export function MyCaseView() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="disagree-title"
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-4 backdrop-blur-sm sm:items-center"
           onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
         >
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+          <div className="rise w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
             <h2 id="disagree-title" className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
               {t.myCase.disagreeTitle}
             </h2>
@@ -283,7 +283,7 @@ function Info({ label, value }: { label: string; value: string }) {
 
 function SavedResults({ strategies, ar }: { strategies: string[]; ar: boolean }) {
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+    <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
       <h2 className="font-bold">{ar ? "نتائجي المحفوظة (أنا فقط)" : "My saved results (only me)"}</h2>
       <ul className="mt-2 list-disc ps-5 text-sm text-slate-600 dark:text-slate-300">
         {strategies.map((s) => (

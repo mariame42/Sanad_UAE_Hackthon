@@ -78,12 +78,16 @@ export function DemoConductor() {
   }
 
   return (
-    <div className="fixed bottom-4 end-4 z-[60] print:hidden" dir="ltr">
+    <div
+      className="fixed bottom-4 end-4 z-[60] print:hidden"
+      dir="ltr"
+      style={{ viewTransitionName: "demo-conductor" }}
+    >
       {open ? (
         <div
           role="dialog"
           aria-label="Demo script"
-          className="mb-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+          className="rise mb-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95"
         >
           <div className="flex items-center justify-between bg-[#0F3D3E] px-4 py-3 text-white">
             <p className="text-sm font-bold">🎬 Demo script · 4 min</p>

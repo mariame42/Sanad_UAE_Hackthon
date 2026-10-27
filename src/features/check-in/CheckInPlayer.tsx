@@ -210,40 +210,86 @@ export function CheckInPlayer() {
     .join(" ");
 
   if (phase === "intro") {
+    const paths = [
+      {
+        key: "quick" as const,
+        label: t.checkIn.quick,
+        meta: ar ? `${QUICK_IDS.length} أنشطة · نحو 4 دقائق` : `${QUICK_IDS.length} activities · about 4 min`,
+        icon: "⚡",
+      },
+      {
+        key: "full" as const,
+        label: t.checkIn.full,
+        meta: ar ? `${FULL_IDS.length} أنشطة · نحو 10 دقائق` : `${FULL_IDS.length} activities · about 10 min`,
+        icon: "🧩",
+      },
+    ];
+    const promises = ar
+      ? ["لا تشخيص", "لا كاميرا", "أنت تختار ما يُحفظ"]
+      : ["No diagnosis", "No camera", "You choose what’s saved"];
     return (
       <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8">
-        <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
-          {t.checkIn.title}
-        </h1>
-        <p className="mt-2 text-slate-600 dark:text-slate-300">
-          {t.checkIn.subtitle}
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button
-            type="button"
-            variant={path === "quick" ? "primary" : "secondary"}
-            onClick={() => setPath("quick")}
-          >
-            {t.checkIn.quick}
-          </Button>
-          <Button
-            type="button"
-            variant={path === "full" ? "primary" : "secondary"}
-            onClick={() => setPath("full")}
-          >
-            {t.checkIn.full}
-          </Button>
+        <div className="rise relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F3D3E] via-[#165656] to-[#1F7A7A] p-7 text-white shadow-soft">
+          <div aria-hidden className="welcome-float absolute -end-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+          <div aria-hidden className="welcome-float absolute -bottom-14 end-24 h-28 w-28 rounded-full bg-[#9FD9D6]/15 [animation-delay:1.5s]" />
+          <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-[#9FD9D6]">
+            {ar ? "اكتشف ما يساعدك" : "Find what helps you"}
+          </p>
+          <h1 className="relative mt-2 text-3xl font-bold tracking-tight sm:text-4xl">{t.checkIn.title}</h1>
+          <p className="relative mt-2 max-w-lg text-white/80">{t.checkIn.subtitle}</p>
+          <ul className="relative mt-5 flex flex-wrap gap-2">
+            {promises.map((p) => (
+              <li key={p} className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold ring-1 ring-white/15">
+                ✓ {p}
+              </li>
+            ))}
+          </ul>
         </div>
+
+        <fieldset className="mt-6">
+          <legend className="sr-only">{ar ? "اختر المسار" : "Choose a path"}</legend>
+          <div className="stagger grid gap-3 sm:grid-cols-2">
+            {paths.map((p) => {
+              const on = path === p.key;
+              return (
+                <button
+                  key={p.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setPath(p.key)}
+                  className={`lift flex items-center gap-4 rounded-2xl border bg-white/90 p-4 text-start shadow-soft dark:bg-slate-900/70 ${
+                    on
+                      ? "border-[#1F7A7A] ring-2 ring-[#1F7A7A]/25 dark:border-[#4DB3B0]"
+                      : "border-slate-200/80 dark:border-white/10"
+                  }`}
+                >
+                  <span
+                    aria-hidden
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl transition-colors ${
+                      on ? "bg-[#1F7A7A] text-white" : "bg-[#E8F4F3] dark:bg-[#1A3D3A]"
+                    }`}
+                  >
+                    {p.icon}
+                  </span>
+                  <span>
+                    <span className="block font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{p.label}</span>
+                    <span className="block text-sm text-slate-500">{p.meta}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
         <FocusModeHint />
         <Button
           type="button"
-          className="mt-6"
+          className="group mt-6 px-6 py-3"
           onClick={() => {
             setIndex(0);
             setPhase("play");
           }}
         >
-          {t.checkIn.start}
+          {t.checkIn.start} <span className="nudge">→</span>
         </Button>
       </div>
     );
@@ -255,11 +301,11 @@ export function CheckInPlayer() {
         <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
           {t.checkIn.results}
         </h1>
-        <ul className="mt-6 space-y-4">
+        <ul className="stagger mt-6 space-y-4">
           {strategies.map((s) => (
             <li
               key={s.title}
-              className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+              className="rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70"
             >
               <h2 className="font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
                 {s.title}
@@ -271,7 +317,7 @@ export function CheckInPlayer() {
           ))}
         </ul>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900" aria-labelledby="formats-title">
+        <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70" aria-labelledby="formats-title">
           <h2 id="formats-title" className="font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
             {ar ? "أين كان الفهم أسهل اليوم" : "Where it clicked today"}
           </h2>
@@ -283,7 +329,7 @@ export function CheckInPlayer() {
                 </span>
                 <span className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                   <span
-                    className="block h-full rounded-full bg-[#1F7A7A] transition-[width] duration-700 dark:bg-[#4DB3B0]"
+                    className="grow-x block h-full rounded-full bg-[#1F7A7A] transition-[width] duration-700 dark:bg-[#4DB3B0]"
                     style={{ width: `${Math.round((acc ?? 0) * 100)}%` }}
                   />
                 </span>
@@ -364,7 +410,7 @@ export function CheckInPlayer() {
     locale === "ar" ? current.transcriptAr : current.transcriptEn;
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8">
+    <div key={current.id} className="step-in mx-auto max-w-2xl px-5 py-10 sm:px-8">
       <p className="text-sm font-medium text-slate-500">
         {t.checkIn.progress} {index + 1} / {ids.length}
       </p>
@@ -476,7 +522,7 @@ export function CheckInPlayer() {
                 {options.map((opt, oi) => (
                   <label
                     key={opt}
-                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm has-[:checked]:border-[#1F7A7A] dark:border-slate-700"
+                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white/70 px-3 py-2.5 text-sm transition-all duration-200 hover:border-slate-300 hover:bg-white active:scale-[0.99] has-[:checked]:border-[#1F7A7A] has-[:checked]:bg-[#E8F4F3] has-[:checked]:shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:has-[:checked]:border-[#4DB3B0] dark:has-[:checked]:bg-[#1A3D3A]"
                   >
                     <input
                       type="radio"

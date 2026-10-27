@@ -15,7 +15,8 @@ export default function AppShellLayout({
       >
         <AppHeader />
       </Suspense>
-      <main className="flex-1 bg-[#F9FBFC] dark:bg-[#0B1615]">{children}</main>
+      <div aria-hidden className="ambient" />
+      <main className="flex-1">{children}</main>
     </>
   );
 }

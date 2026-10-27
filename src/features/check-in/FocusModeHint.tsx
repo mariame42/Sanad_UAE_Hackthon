@@ -7,7 +7,7 @@ export function FocusModeHint() {
   const [on, setOn] = useState(false);
 
   return (
-    <div className="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-3 text-sm dark:border-slate-600">
+    <div className="rise mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/50 px-4 py-3 text-sm dark:border-slate-600 dark:bg-slate-900/40">
       <label className="flex cursor-pointer items-center gap-2">
         <input
           type="checkbox"

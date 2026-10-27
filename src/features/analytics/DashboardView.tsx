@@ -13,10 +13,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CountUp, CountUpText } from "@/components/motion/CountUp";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
 
-const GRID = "#e2e8f0";
 const AXIS = { fontSize: 12, fill: "#64748b" };
 
 export function DashboardView() {
@@ -74,7 +74,7 @@ export function DashboardView() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-5xl px-5 py-10 sm:px-8">
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.dashboard.title}</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {ar
@@ -98,7 +98,7 @@ export function DashboardView() {
           ].map(([label, n]) => (
             <div key={String(label)}>
               <dt className="text-xs text-white/70">{label}</dt>
-              <dd className="text-3xl font-bold tabular-nums">{n}</dd>
+              <dd className="text-3xl font-bold tabular-nums"><CountUp value={Number(n)} /></dd>
             </div>
           ))}
         </dl>
@@ -106,9 +106,9 @@ export function DashboardView() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {targets.map((kpi) => (
-          <div key={kpi.label} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+          <div key={kpi.label} className="rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-4 dark:border-white/10 dark:bg-slate-900/70">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</p>
-            <p className="mt-2 text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{kpi.value}</p>
+            <p className="mt-2 text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]"><CountUpText text={kpi.value} /></p>
             <p className={`mt-1 text-xs font-semibold ${kpi.ok ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}`}>
               {kpi.ok ? "✓" : "⚠"} {kpi.target}
             </p>
@@ -121,10 +121,10 @@ export function DashboardView() {
           <h2 id="time-chart-title" className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
             {t.dashboard.timeToSupport}
           </h2>
-          <div className="mt-4 h-64 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" dir="ltr">
+          <div className="mt-4 h-64 rounded-2xl border border-slate-200/80 bg-white/90 p-4 text-slate-200 shadow-soft dark:border-white/10 dark:bg-slate-900/70 dark:text-white/10" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dashboard.timeToSupportDays} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke={GRID} vertical={false} />
+                <CartesianGrid stroke="currentColor" vertical={false} />
                 <XAxis dataKey="week" tick={AXIS} axisLine={false} tickLine={false} />
                 <YAxis tick={AXIS} axisLine={false} tickLine={false} domain={[0, 7]} />
                 <Tooltip />
@@ -144,10 +144,10 @@ export function DashboardView() {
           <h2 id="approp-chart-title" className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
             {t.dashboard.appropriateness}
           </h2>
-          <div className="mt-4 h-64 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" dir="ltr">
+          <div className="mt-4 h-64 rounded-2xl border border-slate-200/80 bg-white/90 p-4 text-slate-200 shadow-soft dark:border-white/10 dark:bg-slate-900/70 dark:text-white/10" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dashboard.appropriateness} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
-                <CartesianGrid stroke={GRID} vertical={false} />
+                <CartesianGrid stroke="currentColor" vertical={false} />
                 <XAxis dataKey="month" tick={AXIS} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={AXIS} axisLine={false} tickLine={false} />
                 <Tooltip cursor={{ fill: "rgba(148,163,184,0.12)" }} />
@@ -168,7 +168,7 @@ export function DashboardView() {
             ? "سند لا يخلق طلباً لا يستطيع تلبيته: عند امتلاء خدمة ما، يحصل الطالب على دعم L2 فوراً ووقت انتظار صادق."
             : "Sanad doesn’t create demand it can’t serve: when a service is full, students get L2 support now and an honest wait time."}
         </p>
-        <ul className="mt-4 space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+        <ul className="mt-4 space-y-4 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
           {dashboard.demand.map((row) => {
             const scale = Math.max(...dashboard.demand.map((d) => Math.max(d.requests, d.capacity))) * 1.1;
             const over = row.requests > row.capacity;
@@ -244,7 +244,7 @@ export function DashboardView() {
             </table>
           </div>
         ) : (
-          <ul className="mt-4 space-y-2 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+          <ul className="mt-4 space-y-2 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
             {equity.map((row) => (
               <li key={row.group} className="grid grid-cols-[9rem_1fr_3.5rem] items-center gap-3 text-sm sm:grid-cols-[12rem_1fr_4rem]">
                 <span className="truncate">{row.group}</span>

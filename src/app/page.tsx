@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { AppHeader } from "@/components/shell/AppHeader";
 import { HowSanadHelps } from "@/components/welcome/HowSanadHelps";
 import { WelcomeFooter } from "@/components/welcome/WelcomeFooter";
@@ -14,11 +15,14 @@ export default function WelcomePage() {
       >
         <AppHeader />
       </Suspense>
-      <main className="flex-1 bg-[#F9FBFC] dark:bg-[#0B1615]">
-        <WelcomeHero />
-        <HowSanadHelps />
-      </main>
-      <WelcomeFooter />
+      <div aria-hidden className="ambient" />
+      <PageTransition>
+        <main className="flex-1">
+          <WelcomeHero />
+          <HowSanadHelps />
+        </main>
+        <WelcomeFooter />
+      </PageTransition>
     </>
   );
 }

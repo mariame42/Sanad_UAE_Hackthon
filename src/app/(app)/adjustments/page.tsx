@@ -1,5 +1,10 @@
 import { AdjustmentRequests } from "@/features/passport/AdjustmentRequests";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 export default function AdjustmentsPage() {
-  return <AdjustmentRequests />;
+  return (
+    <PageTransition>
+      <AdjustmentRequests />
+    </PageTransition>
+  );
 }

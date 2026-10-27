@@ -102,7 +102,7 @@ export function ConcernDeskForm() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+    <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
         {t.concern.title}
       </h1>
@@ -211,7 +211,7 @@ export function ConcernDeskForm() {
         </p>
       ) : null}
 
-      <details className="group mt-10 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+      <details className="group mt-10 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
         <summary className="cursor-pointer font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
           {ar ? "دليل المحادثة: قل هذا، لا ذاك" : "Conversation guide: say this, not that"}
         </summary>
@@ -263,7 +263,7 @@ export function ConcernDeskForm() {
             {myConcerns.map((c) => (
               <li
                 key={c.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-white/90 shadow-soft px-4 py-3 text-sm dark:border-white/10 dark:bg-slate-900/70"
               >
                 <span className="font-medium">
                   {c.course} · {c.task}

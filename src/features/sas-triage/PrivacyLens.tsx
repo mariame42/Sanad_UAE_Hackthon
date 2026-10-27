@@ -127,7 +127,7 @@ export function PrivacyLens({ record, locale }: { record: CaseRecord; locale: Lo
   return (
     <section
       aria-labelledby="lens-title"
-      className="mt-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900"
+      className="mt-8 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="lens-title" className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">

@@ -97,7 +97,7 @@ export function HowSanadHelps() {
           {features.map((f) => (
             <article
               key={f.n}
-              className={`flex flex-col rounded-2xl p-5 ${f.bg} transition hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-black/40`}
+              className={`reveal lift group flex flex-col rounded-3xl p-5 ${f.bg} dark:hover:shadow-black/40`}
             >
               <div className="flex items-start justify-between">
                 <span className={`${f.accent}`}>{f.icon}</span>
@@ -111,7 +111,7 @@ export function HowSanadHelps() {
               </p>
               <Link
                 href={f.href}
-                className={`mt-5 inline-flex h-10 w-10 items-center justify-center rounded-xl transition ${f.btn}`}
+                className={`mt-5 inline-flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110 ${f.btn}`}
                 aria-label={`Open ${f.title}`}
               >
                 <svg

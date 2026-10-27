@@ -1,5 +1,10 @@
 import { DashboardView } from "@/features/analytics/DashboardView";
+import { PageTransition } from "@/components/motion/PageTransition";
 
 export default function DashboardPage() {
-  return <DashboardView />;
+  return (
+    <PageTransition>
+      <DashboardView />
+    </PageTransition>
+  );
 }
