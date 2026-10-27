@@ -32,9 +32,14 @@ export function MyCaseView() {
         <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.myCase.title}</h1>
         <p className="mt-4 text-slate-600 dark:text-slate-300">{t.myCase.none}</p>
         {savedCheckIn ? <SavedResults strategies={savedCheckIn.strategies} ar={ar} /> : null}
-        <Link href="/check-in" className="mt-6 inline-block text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
-          {t.checkIn.title} →
-        </Link>
+        <div className="mt-6 flex flex-wrap gap-4">
+          <Link href="/passport" className="text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
+            {t.passport.title} →
+          </Link>
+          <Link href="/check-in" className="text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
+            {t.checkIn.title} →
+          </Link>
+        </div>
       </div>
     );
   }

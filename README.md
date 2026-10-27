@@ -23,8 +23,8 @@ Use the header role switcher (or `/role`):
 
 | Role | Start at |
 | --- | --- |
-| Student | `/check-in`, `/my-case` |
-| Faculty | `/concern`, `/class-insights` |
+| Student | `/check-in`, `/passport`, `/my-case` |
+| Faculty | `/concern`, `/class-insights`, `/passport` |
 | Advisor / SAS | `/cases` |
 | Leadership | `/dashboard` |
 
@@ -33,11 +33,12 @@ Language toggle (EN/AR + RTL) and dark mode are in the header.
 ## Demo script (3 min)
 
 1. Faculty → Concern Desk → Language Guard → recommend Check-in to class  
-2. Student → Check-in (quick path) → strategies → Talk to a coach  
-3. Advisor → Cases → confirm route / assign owner  
-4. Student → My case → I disagree  
-5. Leadership → Dashboard  
-6. Principles → `/principles`
+2. Student → Check-in → strategies → Saved for me → Learning Passport  
+3. Student → Passport → share with a course / revoke  
+4. Faculty → Passport → see shared evidence (flexible adjustment)  
+5. Advisor → Cases → confirm route / assign owner  
+6. Student → My case → I disagree  
+7. Leadership → Dashboard · Principles → `/principles`
 
 ### Presenter tools
 
@@ -60,7 +61,8 @@ Map* that fixes obstacles for everyone. See [`docs/IDEAS.md`](docs/IDEAS.md).
 
 - `/` welcome  
 - `/role` role picker  
-- `/check-in` Learning Check-in (7 activities)  
+- `/check-in` Learning Check-in  
+- `/passport` Learning Passport (evidence of what works)  
 - `/concern` Concern Desk + Language Guard  
 - `/cases` Case Hub  
 - `/my-case` Student tracker + recourse  

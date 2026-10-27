@@ -20,7 +20,6 @@ import {
   QUICK_IDS,
   type ActivityId,
   type ModeId,
-  type Question,
 } from "./content";
 import { JourneyBar } from "./JourneyBar";
 import { QuestionBar } from "./QuestionBar";
@@ -28,6 +27,7 @@ import { ReadingStage } from "./ReadingStage";
 import { ToolsPanel, type Tools } from "./ToolsPanel";
 
 type Phase = "intro" | "play" | "results" | "consent" | "done";
+type PlayStage = "content" | "questions";
 type ToolKey = "tts" | "spacing" | "dyslexiaFont" | "chunking";
 
 type Attempt = {
@@ -86,9 +86,9 @@ export function CheckInPlayer() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [path, setPath] = useState<"quick" | "full">("quick");
   const [index, setIndex] = useState(0);
+  const [playStage, setPlayStage] = useState<PlayStage>("content");
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [qIndex, setQIndex] = useState(0);
-  const [modeOverride, setModeOverride] = useState<ModeId | null>(null);
   const [activeChunk, setActiveChunk] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speakNonce, setSpeakNonce] = useState(0);
@@ -112,8 +112,7 @@ export function CheckInPlayer() {
       : isModeId(current.id)
         ? current.id
         : "read";
-  const mode: ModeId =
-    modeOverride ?? (isModeId(current.id) ? current.id : "read");
+  const mode: ModeId = isModeId(current.id) ? current.id : "read";
 
   const completed = useMemo(() => {
     const set = new Set<string>();
@@ -127,28 +126,8 @@ export function CheckInPlayer() {
     return set;
   }, [ids, index, phase]);
 
-  const flatQuestions = useMemo(() => {
-    const list: { activityId: ActivityId; question: Question }[] = [];
-    for (const id of ids) {
-      const act = activities.find((a) => a.id === id)!;
-      for (const q of act.questions) {
-        list.push({ activityId: id, question: q });
-      }
-    }
-    return list;
-  }, [ids]);
-
-  const activityQuestionOffset = useMemo(() => {
-    let offset = 0;
-    for (let i = 0; i < index; i++) {
-      offset += activities.find((a) => a.id === ids[i])!.questions.length;
-    }
-    return offset;
-  }, [ids, index]);
-
   const currentQuestions = current.questions;
   const currentQuestion = currentQuestions[qIndex];
-  const globalQIndex = activityQuestionOffset + qIndex;
 
   const chunks = locale === "ar" ? PASSAGE_CHUNKS_AR : PASSAGE_CHUNKS_EN;
   const title = locale === "ar" ? PASSAGE_TITLE_AR : PASSAGE_TITLE_EN;
@@ -264,6 +243,13 @@ export function CheckInPlayer() {
     return correct;
   }
 
+  function goToQuestions() {
+    window.speechSynthesis?.cancel();
+    setPlaying(false);
+    setQIndex(0);
+    setPlayStage("questions");
+  }
+
   function advanceFromActivity() {
     window.speechSynthesis?.cancel();
     setPlaying(false);
@@ -282,16 +268,13 @@ export function CheckInPlayer() {
     }
     setIndex((i) => i + 1);
     setQIndex(0);
-    setModeOverride(null);
+    setPlayStage("content");
     setActiveChunk(0);
   }
 
   function nextQuestion() {
     if (qIndex + 1 < currentQuestions.length) {
       setQIndex((i) => i + 1);
-      if (tools.chunking && !playing) {
-        setActiveChunk((c) => Math.min(c + 1, chunks.length - 1));
-      }
       return;
     }
     advanceFromActivity();
@@ -299,12 +282,12 @@ export function CheckInPlayer() {
 
   function chooseConsent(choice: ConsentChoice) {
     setConsent(choice);
-    addCaseFromCheckIn(
-      choice,
-      strategies.map((s) => s.title),
-    );
+    const titles = strategies.map((s) => s.title);
+    addCaseFromCheckIn(choice, titles, attempts);
     setPhase("done");
-    if (choice === "coach" || choice === "sas") {
+    if (choice === "saved") {
+      setTimeout(() => router.push("/passport"), 900);
+    } else if (choice === "coach" || choice === "sas") {
       setTimeout(() => router.push("/my-case"), 1400);
     }
   }
@@ -364,6 +347,7 @@ export function CheckInPlayer() {
             onClick={() => {
               setIndex(0);
               setQIndex(0);
+              setPlayStage("content");
               setPhase("play");
             }}
           >
@@ -531,7 +515,7 @@ export function CheckInPlayer() {
           <JourneyBar locale={locale} current={journeyMode} completed={completed} />
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[16.5rem_minmax(0,1.5fr)_minmax(16rem,22rem)]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[16.5rem_minmax(0,1fr)]">
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <ToolsPanel
               locale={locale}
@@ -542,84 +526,108 @@ export function CheckInPlayer() {
             <CameraNotice locale={locale} />
           </div>
 
-          {showReadingShell ? (
-            <ReadingStage
-              locale={locale}
-              mode={mode}
-              onModeChange={(m) => {
-                window.speechSynthesis?.cancel();
-                setPlaying(false);
-                setModeOverride(m);
-              }}
-              partLabel={partLabel}
-              title={title}
-              chunks={chunks}
-              activeChunk={activeChunk}
-              chunking={tools.chunking}
-              bodyClass={bodyClass}
-              playing={playing}
-              onTogglePlay={() => {
-                if (!tools.tts) {
-                  setTools((prev) => ({ ...prev, tts: true }));
-                }
-                setPlaying((p) => !p);
-              }}
-              captionsOn={captionsOn}
-              onToggleCaptions={() => setCaptionsOn((c) => !c)}
-              slowerSpeech={tools.slowerSpeech}
-              captionText={captionText}
-              onPrevChunk={() => goToChunk(activeChunk - 1)}
-              onNextChunk={() => goToChunk(activeChunk + 1)}
-            />
-          ) : (
-            <section
-              className={`rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${bodyClass}`}
-            >
-              <h1 className="text-2xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
-                {locale === "ar" ? current.titleAr : current.titleEn}
-              </h1>
-              <div className="mt-4 space-y-3 text-base leading-relaxed text-slate-700 dark:text-slate-200">
-                {(locale === "ar" ? current.bodyAr : current.bodyEn)
-                  .split(". ")
-                  .filter(Boolean)
-                  .map((sentence, i) => (
-                    <p key={i}>
-                      {sentence.trim().endsWith(".") ? sentence : `${sentence}.`}
-                    </p>
-                  ))}
-              </div>
-              {tools.tts ? (
-                <AudioPlayerBar
+          {playStage === "content" ? (
+            <div className="space-y-4">
+              {showReadingShell ? (
+                <ReadingStage
                   locale={locale}
+                  mode={mode}
+                  showModeTabs={false}
+                  partLabel={partLabel}
+                  title={title}
+                  chunks={chunks}
+                  activeChunk={activeChunk}
+                  chunking={tools.chunking}
+                  bodyClass={bodyClass}
                   playing={playing}
-                  onToggle={() => setPlaying((p) => !p)}
+                  onTogglePlay={() => {
+                    if (!tools.tts) {
+                      setTools((prev) => ({ ...prev, tts: true }));
+                    }
+                    setPlaying((p) => !p);
+                  }}
                   captionsOn={captionsOn}
                   onToggleCaptions={() => setCaptionsOn((c) => !c)}
-                  slower={tools.slowerSpeech}
+                  slowerSpeech={tools.slowerSpeech}
+                  captionText={captionText}
+                  onPrevChunk={() => goToChunk(activeChunk - 1)}
+                  onNextChunk={() => goToChunk(activeChunk + 1)}
                 />
-              ) : null}
-            </section>
-          )}
+              ) : (
+                <section
+                  className={`rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 ${bodyClass}`}
+                >
+                  <h1 className="text-2xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+                    {locale === "ar" ? current.titleAr : current.titleEn}
+                  </h1>
+                  <div className="mt-4 space-y-3 text-base leading-relaxed text-slate-700 dark:text-slate-200">
+                    {(locale === "ar" ? current.bodyAr : current.bodyEn)
+                      .split(". ")
+                      .filter(Boolean)
+                      .map((sentence, i) => (
+                        <p key={i}>
+                          {sentence.trim().endsWith(".")
+                            ? sentence
+                            : `${sentence}.`}
+                        </p>
+                      ))}
+                  </div>
+                  {tools.tts ? (
+                    <AudioPlayerBar
+                      locale={locale}
+                      playing={playing}
+                      onToggle={() => setPlaying((p) => !p)}
+                      captionsOn={captionsOn}
+                      onToggleCaptions={() => setCaptionsOn((c) => !c)}
+                      slower={tools.slowerSpeech}
+                    />
+                  ) : null}
+                </section>
+              )}
 
-          {currentQuestion ? (
-            <QuestionBar
-              locale={locale}
-              question={currentQuestion}
-              questionIndex={globalQIndex}
-              questionTotal={flatQuestions.length}
-              selected={answers[currentQuestion.id]}
-              onSelect={(oi) =>
-                setAnswers((prev) => ({ ...prev, [currentQuestion.id]: oi }))
-              }
-              onNext={nextQuestion}
-              nextLabel={
-                globalQIndex + 1 >= flatQuestions.length
-                  ? t.checkIn.submit
-                  : t.checkIn.nextQuestion
-              }
-              footerLeft={t.checkIn.footerPause}
-              bodyClass={bodyClass}
-            />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  className="!bg-[var(--sanad-indigo)]"
+                  onClick={goToQuestions}
+                >
+                  {ar ? "متابعة إلى الأسئلة" : "Continue to questions"}
+                </Button>
+              </div>
+            </div>
+          ) : currentQuestion ? (
+            <div className="mx-auto w-full max-w-xl">
+              <p className="mb-3 text-sm font-medium text-slate-500">
+                {ar
+                  ? `أسئلة — ${current.titleAr}`
+                  : `Questions — ${current.titleEn}`}
+              </p>
+              <QuestionBar
+                locale={locale}
+                question={currentQuestion}
+                questionIndex={qIndex}
+                questionTotal={currentQuestions.length}
+                selected={answers[currentQuestion.id]}
+                onSelect={(oi) =>
+                  setAnswers((prev) => ({
+                    ...prev,
+                    [currentQuestion.id]: oi,
+                  }))
+                }
+                onNext={nextQuestion}
+                nextLabel={
+                  qIndex + 1 >= currentQuestions.length
+                    ? index + 1 >= ids.length
+                      ? t.checkIn.submit
+                      : ar
+                        ? "التالي"
+                        : "Next"
+                    : t.checkIn.nextQuestion
+                }
+                footerLeft={t.checkIn.footerPause}
+                bodyClass={bodyClass}
+              />
+            </div>
           ) : null}
         </div>
 

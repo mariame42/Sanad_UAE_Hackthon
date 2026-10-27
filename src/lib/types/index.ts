@@ -87,6 +87,63 @@ export type CheckInStrategy = {
   bodyAr: string;
 };
 
+export type PassportToolKey =
+  | "tts"
+  | "spacing"
+  | "dyslexiaFont"
+  | "chunking";
+
+/** One Check-in activity result, used to build Passport evidence. */
+export type CheckInAttempt = {
+  id: string;
+  correct: number;
+  total: number;
+  tools: {
+    tts: boolean;
+    spacing: boolean;
+    dyslexiaFont: boolean;
+    chunking: boolean;
+    slowerSpeech?: boolean;
+  };
+};
+
+export type PassportEvidence = {
+  tool: PassportToolKey;
+  labelEn: string;
+  labelAr: string;
+  withPct: number | null;
+  withoutPct: number | null;
+  /** withPct − withoutPct when both exist */
+  deltaPct: number | null;
+  trialsOn: number;
+  trialsOff: number;
+  helped: boolean;
+};
+
+export type PassportFormatEvidence = {
+  format: "text" | "audio" | "video";
+  pct: number | null;
+};
+
+export type PassportShare = {
+  id: string;
+  course: string;
+  sharedAt: string;
+  revokedAt: string | null;
+  code: string;
+};
+
+/** Student-owned evidence of what works — not a diagnosis. */
+export type LearningPassport = {
+  studentId: string;
+  studentName: string;
+  updatedAt: string;
+  evidence: PassportEvidence[];
+  formats: PassportFormatEvidence[];
+  strategyTitles: string[];
+  shares: PassportShare[];
+};
+
 export type Persona = {
   role: Role;
   nameEn: string;

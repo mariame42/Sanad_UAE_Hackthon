@@ -17,12 +17,20 @@ import {
   seedConcerns,
 } from "./seed";
 import { createPersistentStore } from "./persist";
+import {
+  buildPassportEvidence,
+  buildPassportFormats,
+  shareCode,
+} from "@/lib/passport";
+import { STUDENT_PROFILE } from "@/lib/student-profile";
 import type {
   CaseRecord,
   CaseStatus,
+  CheckInAttempt,
   Concern,
   ConsentChoice,
   HandoffEntry,
+  LearningPassport,
   Role,
   RouteOption,
 } from "@/lib/types";
@@ -33,27 +41,78 @@ type DemoState = {
   concerns: Concern[];
   cases: CaseRecord[];
   savedCheckIn: SavedCheckIn | null;
+  passport: LearningPassport | null;
 };
 
-const demoStore = createPersistentStore<DemoState>("sanad-demo-v2", {
+const DEMO_STUDENT = {
+  name: STUDENT_PROFILE.nameEn,
+  id: STUDENT_PROFILE.id,
+};
+
+const seedPassport: LearningPassport = {
+  studentId: DEMO_STUDENT.id,
+  studentName: DEMO_STUDENT.name,
+  updatedAt: new Date().toISOString(),
+  evidence: [
+    {
+      tool: "tts",
+      labelEn: "Read aloud / text-to-speech",
+      labelAr: "القراءة بصوت عالٍ",
+      withPct: 88,
+      withoutPct: 50,
+      deltaPct: 38,
+      trialsOn: 2,
+      trialsOff: 1,
+      helped: true,
+    },
+    {
+      tool: "chunking",
+      labelEn: "One chunk at a time",
+      labelAr: "جزء واحد في كل مرة",
+      withPct: 75,
+      withoutPct: 50,
+      deltaPct: 25,
+      trialsOn: 2,
+      trialsOff: 1,
+      helped: true,
+    },
+  ],
+  formats: [
+    { format: "text", pct: 67 },
+    { format: "audio", pct: 88 },
+    { format: "video", pct: 100 },
+  ],
+  strategyTitles: ["Read aloud helped you", "One chunk at a time helped you"],
+  shares: [],
+};
+
+const demoStore = createPersistentStore<DemoState>("sanad-demo-v3", {
   concerns: seedConcerns,
   cases: seedCases,
   savedCheckIn: null,
+  passport: seedPassport,
 });
-
-const DEMO_STUDENT = { name: "Layla Al Mansoori", id: "stu-layla" };
 
 type MockStoreValue = {
   concerns: Concern[];
   cases: CaseRecord[];
   savedCheckIn: SavedCheckIn | null;
+  passport: LearningPassport | null;
   addConcern: (
     concern: Omit<Concern, "id" | "createdAt" | "outcome" | "caseId">,
   ) => Concern;
   addCaseFromCheckIn: (
     consent: ConsentChoice,
     strategies: string[],
+    attempts?: CheckInAttempt[],
   ) => CaseRecord | null;
+  updatePassportFromCheckIn: (
+    attempts: CheckInAttempt[],
+    strategies: string[],
+  ) => LearningPassport;
+  sharePassport: (course: string) => LearningPassport | null;
+  revokePassportShare: (shareId: string) => void;
+  clearPassport: () => void;
   updateCase: (id: string, patch: Partial<CaseRecord>) => void;
   confirmRoute: (id: string, route: RouteOption, owner: string) => void;
   assignOwner: (id: string, owner: string) => void;
@@ -147,9 +206,78 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const updatePassportFromCheckIn = useCallback(
+    (attempts: CheckInAttempt[], strategies: string[]) => {
+      const evidence = buildPassportEvidence(attempts);
+      const formats = buildPassportFormats(attempts);
+      const passport: LearningPassport = {
+        studentId: DEMO_STUDENT.id,
+        studentName: DEMO_STUDENT.name,
+        updatedAt: now(),
+        evidence:
+          evidence.length > 0
+            ? evidence
+            : demoStore.get().passport?.evidence ?? [],
+        formats,
+        strategyTitles: strategies,
+        shares: demoStore.get().passport?.shares ?? [],
+      };
+      demoStore.set((s) => ({ ...s, passport }));
+      return passport;
+    },
+    [],
+  );
+
+  const sharePassport = useCallback((course: string) => {
+    const current = demoStore.get().passport;
+    if (!current) return null;
+    const trimmed = course.trim();
+    if (!trimmed) return current;
+    const existing = current.shares.find(
+      (s) => s.course === trimmed && !s.revokedAt,
+    );
+    if (existing) return current;
+    const share = {
+      id: uid("share"),
+      course: trimmed,
+      sharedAt: now(),
+      revokedAt: null,
+      code: shareCode(current.studentId, trimmed),
+    };
+    const passport = { ...current, shares: [...current.shares, share] };
+    demoStore.set((s) => ({ ...s, passport }));
+    return passport;
+  }, []);
+
+  const revokePassportShare = useCallback((shareId: string) => {
+    demoStore.set((s) => {
+      if (!s.passport) return s;
+      return {
+        ...s,
+        passport: {
+          ...s.passport,
+          shares: s.passport.shares.map((share) =>
+            share.id === shareId ? { ...share, revokedAt: now() } : share,
+          ),
+        },
+      };
+    });
+  }, []);
+
+  const clearPassport = useCallback(() => {
+    demoStore.set((s) => ({ ...s, passport: null, savedCheckIn: null }));
+  }, []);
+
   const addCaseFromCheckIn = useCallback(
-    (consent: ConsentChoice, strategies: string[]) => {
+    (
+      consent: ConsentChoice,
+      strategies: string[],
+      attempts: CheckInAttempt[] = [],
+    ) => {
       if (consent === "private") return null;
+      if (attempts.length) {
+        updatePassportFromCheckIn(attempts, strategies);
+      }
       if (consent === "saved") {
         demoStore.set((s) => ({
           ...s,
@@ -201,7 +329,7 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
       demoStore.set((s) => ({ ...s, cases: [record, ...s.cases] }));
       return record;
     },
-    [],
+    [updatePassportFromCheckIn],
   );
 
   const updateCase = useCallback((id: string, patch: Partial<CaseRecord>) => {
@@ -361,8 +489,13 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
       concerns: state.concerns,
       cases: state.cases,
       savedCheckIn: state.savedCheckIn,
+      passport: state.passport,
       addConcern,
       addCaseFromCheckIn,
+      updatePassportFromCheckIn,
+      sharePassport,
+      revokePassportShare,
+      clearPassport,
       updateCase,
       confirmRoute,
       assignOwner,
@@ -383,6 +516,10 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
       state,
       addConcern,
       addCaseFromCheckIn,
+      updatePassportFromCheckIn,
+      sharePassport,
+      revokePassportShare,
+      clearPassport,
       updateCase,
       confirmRoute,
       assignOwner,

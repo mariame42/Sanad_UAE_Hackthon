@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { navForRole, PERSONAS, ROLE_HOME } from "@/lib/roles/config";
 import { useRole } from "@/lib/roles/RoleProvider";
+import { STUDENT_PROFILE } from "@/lib/student-profile";
 import type { Role } from "@/lib/types";
 
 const ALL_ROLES: Role[] = [
@@ -86,8 +87,19 @@ export function AppHeader() {
               aria-expanded={open}
               aria-label={t.roles.switch}
               onClick={() => setOpen((v) => !v)}
-              className="inline-flex max-w-[11rem] items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F7A7A] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:max-w-none"
+              className="inline-flex max-w-[12rem] items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1F7A7A] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 sm:max-w-none"
             >
+              {role === "student" ? (
+                <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full bg-slate-100">
+                  <Image
+                    src={STUDENT_PROFILE.photoSrc}
+                    alt=""
+                    fill
+                    className="object-cover object-top"
+                    sizes="28px"
+                  />
+                </span>
+              ) : null}
               <span className="truncate">
                 {(t.roles as Record<string, string>)[role]}
               </span>

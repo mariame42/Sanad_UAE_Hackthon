@@ -126,6 +126,42 @@ const sharedQuestions: Question[] = [
     ],
     correctIndex: 0,
   },
+  {
+    id: "v2",
+    promptEn: "While you sleep, what does your brain do with what you studied?",
+    promptAr: "أثناء نومك، ماذا يفعل دماغك بما درست؟",
+    optionsEn: [
+      "It sorts and stores useful parts",
+      "It deletes everything you learned",
+      "It only works if you cram",
+      "It waits for a diagnosis label",
+    ],
+    optionsAr: [
+      "يرتّب ويخزّن الأجزاء المفيدة",
+      "يمحو كل ما تعلّمته",
+      "يعمل فقط إذا سهرت للمذاكرة",
+      "ينتظر تصنيفاً تشخيصياً",
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: "v3",
+    promptEn: "Sleep after study usually helps you…",
+    promptAr: "النوم بعد الدراسة يساعدك عادة على…",
+    optionsEn: [
+      "Recall more later",
+      "Need more labels",
+      "Skip rest forever",
+      "Avoid tools that fit you",
+    ],
+    optionsAr: [
+      "التذكّر أكثر لاحقاً",
+      "المزيد من التصنيفات",
+      "تجنّب الراحة إلى الأبد",
+      "تجنّب الأدوات التي تناسبك",
+    ],
+    correctIndex: 0,
+  },
 ];
 
 export const activities: Activity[] = [
@@ -147,7 +183,7 @@ export const activities: Activity[] = [
       "Different needs. Same goals. Sleep, rest, and tools that fit you keep learning dignified — without labels.",
     transcriptAr:
       "احتياجات مختلفة. أهداف واحدة. النوم والراحة والأدوات التي تناسبك تحفظ كرامة التعلّم — بلا تصنيفات.",
-    questions: [sharedQuestions[3]],
+    questions: [sharedQuestions[3], sharedQuestions[4], sharedQuestions[5]],
   },
   {
     id: "timed",

@@ -20,7 +20,19 @@ const STEPS: Step[] = [
     role: "student",
     href: "/check-in",
     title: "Student takes the Check-in",
-    cue: "Camera off. Skip one reading question, turn on Text-to-speech for the Tool trial → “Text-to-speech helped you” → Talk to a learning coach.",
+    cue: "Camera off. Use Read aloud → strategies → Saved for me (opens Learning Passport) or Talk to a coach.",
+  },
+  {
+    role: "student",
+    href: "/passport",
+    title: "Learning Passport",
+    cue: "Show with-vs-without evidence. Share with ENG 101, copy code / QR, revoke. Evidence — not a diagnosis.",
+  },
+  {
+    role: "faculty",
+    href: "/passport",
+    title: "Faculty sees a shared Passport",
+    cue: "Switch shows shared Passports. Accept flexible adjustment (pilot) — no SAS queue for light fixes.",
   },
   {
     role: "advisor",

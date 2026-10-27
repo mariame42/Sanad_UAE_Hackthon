@@ -6,7 +6,8 @@ import { AudioPlayerBar } from "./AudioPlayerBar";
 type Props = {
   locale: "en" | "ar";
   mode: ModeId;
-  onModeChange: (mode: ModeId) => void;
+  onModeChange?: (mode: ModeId) => void;
+  showModeTabs?: boolean;
   partLabel: string;
   title: string;
   chunks: string[];
@@ -32,6 +33,7 @@ export function ReadingStage({
   locale,
   mode,
   onModeChange,
+  showModeTabs = true,
   partLabel,
   title,
   chunks,
@@ -55,31 +57,43 @@ export function ReadingStage({
     <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-700 dark:bg-slate-900">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-medium text-slate-500">{partLabel}</p>
-        <div
-          className="inline-flex rounded-full bg-slate-100 p-1 dark:bg-slate-800"
-          role="tablist"
-          aria-label={ar ? "طريقة العرض" : "How you take this part"}
-        >
-          {MODES.map((m) => {
-            const selected = mode === m.id;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                onClick={() => onModeChange(m.id)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-                  selected
-                    ? "bg-[var(--sanad-indigo)] text-white shadow-sm"
-                    : "text-slate-500 hover:text-[var(--sanad-indigo)] dark:hover:text-white"
-                }`}
-              >
-                {ar ? m.ar : m.en}
-              </button>
-            );
-          })}
-        </div>
+        {showModeTabs && onModeChange ? (
+          <div
+            className="inline-flex rounded-full bg-slate-100 p-1 dark:bg-slate-800"
+            role="tablist"
+            aria-label={ar ? "طريقة العرض" : "How you take this part"}
+          >
+            {MODES.map((m) => {
+              const selected = mode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => onModeChange(m.id)}
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                    selected
+                      ? "bg-[var(--sanad-indigo)] text-white shadow-sm"
+                      : "text-slate-500 hover:text-[var(--sanad-indigo)] dark:hover:text-white"
+                  }`}
+                >
+                  {ar ? m.ar : m.en}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <span className="rounded-full bg-[var(--sanad-indigo)]/10 px-3.5 py-1.5 text-sm font-semibold text-[var(--sanad-indigo)] dark:text-[#C5D0F0]">
+            {ar
+              ? mode === "watch"
+                ? "مشاهدة"
+                : "قراءة"
+              : mode === "watch"
+                ? "Watch"
+                : "Read"}
+          </span>
+        )}
       </div>
 
       <h1
