@@ -106,6 +106,8 @@ export const dictionaries = {
         "No Passport yet. Complete a Check-in and choose Saved for me, Talk to a coach, or Ask SAS — Sanad will keep what helped you here.",
       updated: "Updated",
       clear: "Delete my Passport",
+      exportPdf: "Export PDF",
+      exportingPdf: "Preparing PDF…",
       guardrail:
         "Formal SAS accommodations still follow university process. This Passport is for flexible adjustments only — with vs without tool, never a label about you.",
       evidenceTitle: "What helped in your Check-in",
@@ -281,6 +283,8 @@ export const dictionaries = {
         "لا جواز بعد. أكمل التسجيل واختر «احفظ لي» أو مدرب أو خدمات الإتاحة — سيحفظ سند هنا ما ساعدك.",
       updated: "آخر تحديث",
       clear: "حذف جوازي",
+      exportPdf: "تصدير PDF",
+      exportingPdf: "جاري تجهيز PDF…",
       guardrail:
         "التسهيلات الرسمية لخدمات الإتاحة تتبع إجراءات الجامعة. هذا الجواز لتعديلات مرنة فقط — مقارنة مع الأداة وبدونها، دون تصنيفك.",
       evidenceTitle: "ما ساعدك في التسجيل",

@@ -48,7 +48,7 @@ const PRIVACY = {
   ar: "يعمل على جهازك. لا يُسجَّل الفيديو ولا يُرسل — تبقى الأرقام فقط.",
 };
 
-/** Intro card: the camera is an extra signal, on by default, off with one tap. */
+/** Intro card: optional camera — off by default; student turns it on. */
 export function FocusOptIn({
   locale,
   on,

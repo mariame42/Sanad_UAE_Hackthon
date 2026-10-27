@@ -105,7 +105,8 @@ export function CheckInPlayer() {
   });
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [consent, setConsent] = useState<ConsentChoice | null>(null);
-  const [cameraOn, setCameraOn] = useState(true);
+  // Off by default — loading MediaPipe from the CDN can hang the tab offline.
+  const [cameraOn, setCameraOn] = useState(false);
   const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
 
   const ids = path === "quick" ? QUICK_IDS : FULL_IDS;

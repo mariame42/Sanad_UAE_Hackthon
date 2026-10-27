@@ -35,11 +35,64 @@ export type FocusLive = {
 
 let landmarkerPromise: Promise<FaceLandmarker> | null = null;
 
+const MODEL_LOAD_MS = 20_000;
+
+/** MediaPipe WASM prints INFO via console and Next shows it as [browser] errors. */
+const MEDIAPIPE_NOISE =
+  /face_landmarker|gl_context|XNNPACK|TensorFlow Lite|OpenGL error checking|vision_wasm|Sets FaceBlendshapesGraph|put_char|fd_write/i;
+
+function silenceMediaPipeLogs() {
+  const methods = ["log", "info", "warn", "debug", "error"] as const;
+  const originals = Object.fromEntries(
+    methods.map((m) => [m, console[m].bind(console)]),
+  ) as Record<(typeof methods)[number], (...args: unknown[]) => void>;
+
+  const quiet = (...args: unknown[]) => {
+    const text = args
+      .map((a) =>
+        a instanceof Error ? `${a.message}\n${a.stack ?? ""}` : String(a),
+      )
+      .join(" ");
+    return MEDIAPIPE_NOISE.test(text);
+  };
+
+  for (const m of methods) {
+    console[m] = (...args: unknown[]) => {
+      if (quiet(...args)) return;
+      originals[m](...args);
+    };
+  }
+
+  return () => {
+    for (const m of methods) console[m] = originals[m];
+  };
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`${label} timed out`)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
 /** Load once per page; GPU first, CPU if the GPU delegate is unavailable. */
 function loadLandmarker() {
   landmarkerPromise ??= (async () => {
     const { FaceLandmarker, FilesetResolver } = await import("@mediapipe/tasks-vision");
-    const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
+    const fileset = await withTimeout(
+      FilesetResolver.forVisionTasks(WASM_BASE),
+      MODEL_LOAD_MS,
+      "Focus model WASM",
+    );
     const options = (delegate: "GPU" | "CPU") => ({
       baseOptions: { modelAssetPath: MODEL_URL, delegate },
       runningMode: "VIDEO" as const,
@@ -48,9 +101,17 @@ function loadLandmarker() {
       outputFacialTransformationMatrixes: true,
     });
     try {
-      return await FaceLandmarker.createFromOptions(fileset, options("GPU"));
+      return await withTimeout(
+        FaceLandmarker.createFromOptions(fileset, options("GPU")),
+        MODEL_LOAD_MS,
+        "Focus model GPU",
+      );
     } catch {
-      return FaceLandmarker.createFromOptions(fileset, options("CPU"));
+      return withTimeout(
+        FaceLandmarker.createFromOptions(fileset, options("CPU")),
+        MODEL_LOAD_MS,
+        "Focus model CPU",
+      );
     }
   })();
   landmarkerPromise.catch(() => {
@@ -219,6 +280,7 @@ export function useFocusTracker(enabled: boolean, segment: string) {
     let lastVideoTime = -1;
     let lastFrame = 0;
     let lastPublish = 0;
+    const unmuteLogs = silenceMediaPipeLogs();
 
     /** Feed one gaze reading into the focus state machine and the per-part totals. */
     const update = (now: number, gaze: Gaze) => {
@@ -277,7 +339,12 @@ export function useFocusTracker(enabled: boolean, segment: string) {
       lastVideoTime = video.currentTime;
       lastFrame = now;
 
-      const result = landmarker.detectForVideo(video, now);
+      let result: FaceLandmarkerResult;
+      try {
+        result = landmarker.detectForVideo(video, now);
+      } catch {
+        return;
+      }
       if (canvasRef.current) drawEyes(canvasRef.current, video, result, connections);
       update(now, lookingAtScreen(result));
     };
@@ -309,6 +376,7 @@ export function useFocusTracker(enabled: boolean, segment: string) {
         pendingSinceRef.current = null;
         lastTickRef.current = null;
         setStatus("off");
+        unmuteLogs();
       };
     }
 
@@ -359,6 +427,7 @@ export function useFocusTracker(enabled: boolean, segment: string) {
       stream?.getTracks().forEach((t) => t.stop());
       if (attached) attached.srcObject = null;
       setStatus("off");
+      unmuteLogs();
     };
   }, [enabled, closeStretch]);
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, TextArea, TextInput } from "@/components/ui/Field";
 import { Time } from "@/components/ui/Time";
+import { RoleScopeBanner } from "@/components/shell/RoleScopeBanner";
 import { findLabels, rewriteFallback, segmentText } from "@/lib/language-guard";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
@@ -33,7 +34,7 @@ const OUTCOME_LABEL: Record<Concern["outcome"], { en: string; ar: string }> = {
 
 export function ConcernDeskForm() {
   const { t, locale } = useLocale();
-  const { personaName } = useRole();
+  const { personaName, role } = useRole();
   const { addConcern, concerns } = useMockStore();
   const ar = locale === "ar";
 
@@ -101,8 +102,25 @@ export function ConcernDeskForm() {
     setSource(null);
   }
 
+  if (role !== "faculty") {
+    return (
+      <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
+        <RoleScopeBanner />
+        <h1 className="text-2xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
+          {ar ? "مكتب الملاحظة لهيئة التدريس (L1)" : "Concern Desk is for faculty (L1)"}
+        </h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+          {ar
+            ? "بدّل الدور إلى عضو هيئة تدريس لرفع ملاحظة صفّية. لا تذهب لخدمات الإتاحة تلقائياً."
+            : "Switch role to Faculty to raise a classroom observation. It never goes to SAS automatically."}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      <RoleScopeBanner />
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
         {t.concern.title}
       </h1>

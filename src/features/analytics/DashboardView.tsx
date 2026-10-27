@@ -14,13 +14,17 @@ import {
   YAxis,
 } from "recharts";
 import { CountUp, CountUpText } from "@/components/motion/CountUp";
+import { RoleScopeBanner } from "@/components/shell/RoleScopeBanner";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
+import { useRole } from "@/lib/roles/RoleProvider";
+import Link from "next/link";
 
 const AXIS = { fontSize: 12, fill: "#64748b" };
 
 export function DashboardView() {
   const { t, locale } = useLocale();
+  const { role } = useRole();
   const { dashboard, pilotTargets, cases, passport, appliedFixes } = useMockStore();
   const ar = locale === "ar";
   const [equityAsTable, setEquityAsTable] = useState(false);
@@ -73,8 +77,28 @@ export function DashboardView() {
     },
   ];
 
+  if (role !== "leadership") {
+    return (
+      <div className="stagger mx-auto max-w-5xl px-5 py-10 sm:px-8">
+        <RoleScopeBanner />
+        <h1 className="text-2xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
+          {ar ? "لوحة المؤشرات للقيادة" : "Dashboard is for leadership"}
+        </h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+          {ar
+            ? "بدّل الدور إلى القيادة لرؤية الأنماط المجمّعة — بلا أسماء طلاب."
+            : "Switch to Leadership to see aggregated patterns — no student names."}
+        </p>
+        <Link href="/role" className="mt-6 inline-block text-sm font-semibold text-[#1F7A7A]">
+          {ar ? "اختيار الدور ←" : "Pick a role →"}
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="stagger mx-auto max-w-5xl px-5 py-10 sm:px-8">
+      <RoleScopeBanner />
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.dashboard.title}</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {ar

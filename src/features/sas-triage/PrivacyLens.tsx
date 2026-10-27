@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { routeLabel, statusLabel } from "@/lib/i18n/labels";
-import type { CaseRecord, Locale } from "@/lib/types";
+import { useRole } from "@/lib/roles/RoleProvider";
+import type { CaseRecord, Locale, Role } from "@/lib/types";
 
 type Viewer = "faculty" | "advisor" | "sas" | "leadership";
 
@@ -15,12 +16,25 @@ const VIEWERS: { id: Viewer; en: string; ar: string }[] = [
   { id: "leadership", en: "Leadership", ar: "القيادة" },
 ];
 
+function viewerForRole(role: Role): Viewer {
+  if (role === "faculty" || role === "advisor" || role === "sas" || role === "leadership") {
+    return role;
+  }
+  return "advisor";
+}
+
 /**
  * Shows the same case through each role's eyes — the role-based access
  * rules from the brief, made visible. Hidden values are never rendered.
  */
 export function PrivacyLens({ record, locale }: { record: CaseRecord; locale: Locale }) {
-  const [viewer, setViewer] = useState<Viewer>("faculty");
+  const { role } = useRole();
+  const [viewer, setViewer] = useState<Viewer>(() => viewerForRole(role));
+  const [roleSynced, setRoleSynced] = useState(role);
+  if (role !== roleSynced) {
+    setRoleSynced(role);
+    setViewer(viewerForRole(role));
+  }
   const ar = locale === "ar";
   const sasConsented = record.consent === "sas" || record.handoffSummary?.status === "approved";
 

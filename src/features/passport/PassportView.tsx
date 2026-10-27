@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Time } from "@/components/ui/Time";
+import { RoleScopeBanner } from "@/components/shell/RoleScopeBanner";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
 import { PASSPORT_COURSES } from "@/lib/passport";
 import { formatSec, PART_LABEL } from "@/features/check-in/focus/focusStats";
 import { STUDENT_PROFILE } from "@/lib/student-profile";
 import { useRole } from "@/lib/roles/RoleProvider";
+import { exportPassportPdf } from "./exportPassportPdf";
 
 export function PassportView() {
   const { t, locale } = useLocale();
@@ -21,14 +23,15 @@ export function PassportView() {
   const [course, setCourse] = useState<string>(PASSPORT_COURSES[0]);
   const [custom, setCustom] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const activeShares = useMemo(
     () => passport?.shares.filter((s) => !s.revokedAt) ?? [],
     [passport],
   );
 
-  if (role === "faculty") {
-    return <FacultyPassportInbox ar={ar} />;
+  if (role === "faculty" || role === "advisor") {
+    return <StaffPassportInbox ar={ar} role={role} />;
   }
 
   if (!passport || passport.evidence.length === 0) {
@@ -66,11 +69,22 @@ export function PassportView() {
     }
   }
 
+  async function downloadPdf() {
+    if (!passport || exporting) return;
+    setExporting(true);
+    try {
+      await exportPassportPdf(passport);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const displayName = ar ? STUDENT_PROFILE.nameAr : passport.studentName;
 
   return (
     <div className="sanad-checkin-bg min-h-[calc(100vh-5rem)] px-4 py-8 sm:px-6">
       <div className="mx-auto w-[min(100%,92%)]">
+        <RoleScopeBanner />
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-[var(--sanad-sea)]">
@@ -83,9 +97,19 @@ export function PassportView() {
               {t.passport.subtitle}
             </p>
           </div>
-          <Button type="button" variant="secondary" onClick={() => clearPassport()}>
-            {t.passport.clear}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="!bg-[var(--sanad-indigo)]"
+              disabled={exporting}
+              onClick={() => void downloadPdf()}
+            >
+              {exporting ? t.passport.exportingPdf : t.passport.exportPdf}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => clearPassport()}>
+              {t.passport.clear}
+            </Button>
+          </div>
         </div>
 
         {/* Open passport book — two facing pages */}
@@ -468,30 +492,64 @@ export function PassportView() {
   );
 }
 
-function FacultyPassportInbox({ ar }: { ar: boolean }) {
-  const { passport, respondShare } = useMockStore();
-  const active = passport?.shares.filter((s) => !s.revokedAt) ?? [];
+function StaffPassportInbox({
+  ar,
+  role,
+}: {
+  ar: boolean;
+  role: "faculty" | "advisor";
+}) {
+  const { passport, respondShare, cases } = useMockStore();
+  const courseShares = passport?.shares.filter((s) => !s.revokedAt) ?? [];
+  const coachCase = cases.find(
+    (c) =>
+      c.studentId === passport?.studentId &&
+      (c.consent === "coach" ||
+        c.consent === "sas" ||
+        c.status === "with_advisor" ||
+        c.status === "with_sas"),
+  );
+  const facultyView = role === "faculty";
+  const showEvidence =
+    passport &&
+    passport.evidence.length > 0 &&
+    (facultyView ? courseShares.length > 0 : Boolean(coachCase || courseShares.length));
 
   return (
     <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      <RoleScopeBanner />
       <h1 className="text-3xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
-        {ar ? "جوازات مشاركة الطلاب" : "Shared Learning Passports"}
+        {facultyView
+          ? ar
+            ? "جوازات مشاركة المقررات (L1)"
+            : "Course Passport shares (L1)"
+          : ar
+            ? "جواز التعلّم في مسار الدعم (L2)"
+            : "Learning Passport on the support path (L2)"}
       </h1>
       <p className="mt-2 text-slate-600 dark:text-slate-300">
-        {ar
-          ? "الطالب يشارك معك دليلاً على ما يساعده — ليس تشخيصاً. يمكنك قبول تعديلات مرنة فوراً."
-          : "A student shared evidence of what helps them — not a diagnosis. You can agree flexible adjustments immediately."}
+        {facultyView
+          ? ar
+            ? "الطالب يشارك مع مقررك دليلاً على الأدوات — ليس تشخيصاً. يمكنك قبول تعديلات مرنة فوراً."
+            : "The student shares tool evidence with your course — not a diagnosis. You can accept flexible adjustments immediately."
+          : ar
+            ? "يظهر هنا عندما يختار الطالب «التحدث مع مدرب» أو يشارك الجواز. افتح الحالة لتوجيه المسار."
+            : "Shows when the student chose “Talk to a coach” or shared a Passport. Open the case to confirm the route."}
       </p>
 
-      {active.length === 0 || !passport ? (
-        <p className="mt-8 text-sm text-slate-500">
-          {ar
-            ? "لا توجد مشاركات نشطة بعد. اطلب من الطالب مشاركة جوازه لمقرر ما."
-            : "No active shares yet. Ask the student to share their Passport for a course."}
+      {!showEvidence || !passport ? (
+        <p className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+          {facultyView
+            ? ar
+              ? "لا مشاركات مقرر بعد. اطلب من الطالب مشاركة جوازه لرمز مقررك."
+              : "No course shares yet. Ask the student to share their Passport for your course code."
+            : ar
+              ? "لا جواز في مسار الدعم بعد. يحتاج الطالب اختيار «التحدث مع مدرب» بعد التسجيل."
+              : "No Passport on the support path yet. The student must choose “Talk to a coach” after Check-in."}
         </p>
-      ) : (
+      ) : facultyView ? (
         <div className="mt-8 space-y-4">
-          {active.map((s) => (
+          {courseShares.map((s) => (
             <article
               key={s.id}
               className="lift flex gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
@@ -515,7 +573,7 @@ function FacultyPassportInbox({ ar }: { ar: boolean }) {
                 <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-200">
                   {passport.evidence.map((e) => (
                     <li key={e.tool}>
-                      {(ar ? e.labelAr : e.labelEn)}
+                      {ar ? e.labelAr : e.labelEn}
                       {e.deltaPct !== null
                         ? `: ${e.deltaPct > 0 ? "+" : ""}${e.deltaPct}%`
                         : ""}
@@ -527,7 +585,10 @@ function FacultyPassportInbox({ ar }: { ar: boolean }) {
                   <span className="font-mono">{s.code}</span>
                 </p>
                 {s.response ? (
-                  <p className="pop mt-4 text-sm font-semibold text-[var(--sanad-sea)]" role="status">
+                  <p
+                    className="pop mt-4 text-sm font-semibold text-[var(--sanad-sea)]"
+                    role="status"
+                  >
                     {s.response === "accepted"
                       ? ar
                         ? "✓ قبلتَ التعديل — أُبلغت الطالبة."
@@ -559,6 +620,35 @@ function FacultyPassportInbox({ ar }: { ar: boolean }) {
               </div>
             </article>
           ))}
+        </div>
+      ) : (
+        <div className="mt-8 space-y-4">
+          <article className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--sanad-sea)]">
+              {ar ? "مشاركة مع مسار الدعم" : "Shared on the support path"}
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+              {passport.studentName}
+            </h2>
+            <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-200">
+              {passport.evidence.map((e) => (
+                <li key={e.tool}>
+                  {ar ? e.labelAr : e.labelEn}
+                  {e.deltaPct !== null
+                    ? `: ${e.deltaPct > 0 ? "+" : ""}${e.deltaPct}%`
+                    : ""}
+                </li>
+              ))}
+            </ul>
+            {coachCase ? (
+              <Link
+                href={`/cases/${coachCase.id}`}
+                className="mt-4 inline-flex rounded-xl bg-[var(--sanad-indigo)] px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                {ar ? "فتح حالة الدعم ←" : "Open support case →"}
+              </Link>
+            ) : null}
+          </article>
         </div>
       )}
     </div>

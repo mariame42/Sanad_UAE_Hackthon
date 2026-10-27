@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
 import { useRole } from "@/lib/roles/RoleProvider";
 import type { RouteOption } from "@/lib/types";
+import { RoleScopeBanner } from "@/components/shell/RoleScopeBanner";
 import { PrivacyLens } from "./PrivacyLens";
 
 const ROUTES = Object.keys(ROUTE_LABELS) as RouteOption[];
@@ -20,8 +21,16 @@ export function CaseDetail() {
   const params = useParams();
   const id = String(params.id);
   const { t, locale } = useLocale();
-  const { cases, confirmRoute, assignOwner, logView, draftHandoff, sasFull, sasWaitDays } =
-    useMockStore();
+  const {
+    cases,
+    passport,
+    confirmRoute,
+    assignOwner,
+    logView,
+    draftHandoff,
+    sasFull,
+    sasWaitDays,
+  } = useMockStore();
   const { personaName, role } = useRole();
   const record = cases.find((c) => c.id === id);
   const ar = locale === "ar";
@@ -32,7 +41,20 @@ export function CaseDetail() {
   const [draft, setDraft] = useState("");
   const [drafting, setDrafting] = useState(false);
 
-  const canAct = role === "advisor" || role === "sas";
+  const sasAllowed =
+    !!record && (record.ladder === "L3" || record.consent === "sas");
+  const advisorAllowed =
+    !!record &&
+    (record.consent === "coach" ||
+      record.consent === "sas" ||
+      record.status === "with_advisor" ||
+      record.status === "with_sas" ||
+      record.status === "awaiting_student" ||
+      record.status === "offer_sent" ||
+      record.ladder === "L2" ||
+      record.ladder === "L3");
+  const canAct =
+    (role === "advisor" && advisorAllowed) || (role === "sas" && sasAllowed);
   const me = personaName("en");
   const exists = Boolean(record);
 
@@ -45,6 +67,61 @@ export function CaseDetail() {
     return (
       <div className="stagger mx-auto max-w-2xl px-5 py-10">
         <p>{t.cases.empty}</p>
+      </div>
+    );
+  }
+
+  if (role === "faculty" || role === "leadership" || role === "student") {
+    return (
+      <div className="stagger mx-auto max-w-2xl px-5 py-10 sm:px-8">
+        <RoleScopeBanner />
+        <h1 className="text-2xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
+          {ar ? "هذا الملف خارج نطاق دورك" : "This file is outside your role"}
+        </h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+          {role === "faculty"
+            ? ar
+              ? "هيئة التدريس في L1 — استخدم مكتب الملاحظة أو جواز المقرر."
+              : "Faculty stay at L1 — use Concern Desk or course Passports."
+            : role === "leadership"
+              ? ar
+                ? "القيادة ترى أنماطاً مجمّعة فقط من لوحة المؤشرات."
+                : "Leadership sees aggregated patterns only on the Dashboard."
+              : ar
+                ? "تابع تقدمك من «حالتي»."
+                : "Follow progress from My case."}
+        </p>
+        <Link
+          href={
+            role === "faculty"
+              ? "/concern"
+              : role === "leadership"
+                ? "/dashboard"
+                : "/my-case"
+          }
+          className="mt-6 inline-block text-sm font-semibold text-[#1F7A7A]"
+        >
+          ← {ar ? "العودة" : "Back"}
+        </Link>
+      </div>
+    );
+  }
+
+  if (role === "sas" && !sasAllowed) {
+    return (
+      <div className="stagger mx-auto max-w-2xl px-5 py-10 sm:px-8">
+        <RoleScopeBanner />
+        <h1 className="text-2xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
+          {ar ? "لا موافقة L3 بعد" : "No L3 consent yet"}
+        </h1>
+        <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+          {ar
+            ? "خدمات الإتاحة ترى الملف فقط بعد أن يطلب الطالب «اطلب من خدمات الإتاحة النظر»."
+            : "SAS only opens the file after the student chooses “Ask SAS to look at this.”"}
+        </p>
+        <Link href="/cases" className="mt-6 inline-block text-sm font-semibold text-[#1F7A7A]">
+          ← {t.cases.title}
+        </Link>
       </div>
     );
   }
@@ -93,10 +170,20 @@ export function CaseDetail() {
 
   return (
     <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
+      <RoleScopeBanner />
       <Link href="/cases" className="text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
         ← {t.cases.title}
       </Link>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <p className="mt-3 text-xs font-bold uppercase tracking-wide text-[var(--sanad-sea)]">
+        {role === "sas"
+          ? ar
+            ? "مراجعة إحالة L3"
+            : "L3 screening review"
+          : ar
+            ? "دعم L2 — المرشد / المدرب"
+            : "L2 support — advisor / coach"}
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
           {record.studentName}
         </h1>
@@ -114,6 +201,54 @@ export function CaseDetail() {
         {record.summary}
       </p>
 
+      {passport &&
+      passport.evidence.length > 0 &&
+      passport.studentId === record.studentId &&
+      canAct &&
+      (record.consent === "coach" ||
+        record.consent === "sas" ||
+        record.status === "with_advisor" ||
+        record.status === "with_sas") ? (
+        <section
+          className="mt-6 rounded-2xl border border-[var(--sanad-sea)]/30 bg-[var(--sanad-sea-soft)]/80 p-5 dark:border-[var(--sanad-sea)]/40 dark:bg-[var(--sanad-sea)]/10"
+          aria-labelledby="shared-passport-title"
+        >
+          <h2
+            id="shared-passport-title"
+            className="text-sm font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]"
+          >
+            {ar
+              ? "جواز التعلّم — شاركه الطالب معك"
+              : "Learning Passport — shared with you by the student"}
+          </h2>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            {ar
+              ? "دليل أدوات فقط — ليس تشخيصاً. يمكن للطالب سحب المشاركة."
+              : "Tool evidence only — not a diagnosis. The student can revoke anytime."}
+          </p>
+          <ul className="mt-3 space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
+            {passport.evidence.map((e) => (
+              <li key={e.tool} className="flex flex-wrap items-baseline justify-between gap-2">
+                <span>{ar ? e.labelAr : e.labelEn}</span>
+                <span className="font-semibold tabular-nums text-[var(--sanad-sea)]">
+                  {e.deltaPct === null
+                    ? e.withPct !== null
+                      ? `${e.withPct}%`
+                      : "—"
+                    : `${e.deltaPct > 0 ? "+" : ""}${e.deltaPct}%`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/passport"
+            className="mt-3 inline-block text-xs font-semibold text-[var(--sanad-sea)]"
+          >
+            {ar ? "عرض الجواز ←" : "Open Passport view →"}
+          </Link>
+        </section>
+      ) : null}
+
       {sasFull && (decision === "sas" || record.ladder === "L3") ? (
         <p
           role="status"
@@ -124,46 +259,67 @@ export function CaseDetail() {
         </p>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-[#1F7A7A]/30 bg-[#E8F4F3]/60 p-5 dark:border-[#4DB3B0]/40 dark:bg-[#1A3D3A]/60">
-        <p className="text-xs font-bold uppercase tracking-wide text-[#1F7A7A] dark:text-[#4DB3B0]">
-          ✨ {t.cases.suggest}
-        </p>
-        <p className="mt-1 text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
-          {routeLabel(suggested, locale)}
-        </p>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          <span className="font-semibold">{t.cases.reason}:</span> {why}
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          {ar ? "اقتراح فقط — يقرر إنسان مؤهل." : "Suggestion only — a qualified human decides."}
-        </p>
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-3"
-          disabled={loading}
-          onClick={() => void refreshSuggestion()}
-        >
-          {loading ? "…" : ar ? "تحديث الاقتراح" : "Refresh AI suggestion"}
-        </Button>
-      </div>
+      {canAct ? (
+        <div className="mt-6 rounded-2xl border border-[#1F7A7A]/30 bg-[#E8F4F3]/60 p-5 dark:border-[#4DB3B0]/40 dark:bg-[#1A3D3A]/60">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#1F7A7A] dark:text-[#4DB3B0]">
+            ✨ {t.cases.suggest}
+          </p>
+          <p className="mt-1 text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
+            {routeLabel(suggested, locale)}
+          </p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+            <span className="font-semibold">{t.cases.reason}:</span> {why}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            {role === "sas"
+              ? ar
+                ? "اقتراح إحالة — متخصص خدمات الإتاحة يؤكد."
+                : "Screening suggestion — an SAS professional confirms."
+              : ar
+                ? "اقتراح فقط — المرشد يقرر المسار (L2)."
+                : "Suggestion only — the advisor confirms the L2 route."}
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-3"
+            disabled={loading}
+            onClick={() => void refreshSuggestion()}
+          >
+            {loading ? "…" : ar ? "تحديث الاقتراح" : "Refresh AI suggestion"}
+          </Button>
+        </div>
+      ) : null}
 
       {canAct ? (
         <div className="mt-6 space-y-4">
           <label className="block text-sm font-bold">
-            {t.cases.confirm}
+            {role === "sas"
+              ? ar
+                ? "تأكيد مسار الإحالة"
+                : "Confirm screening route"
+              : t.cases.confirm}
             <select
               className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-white/10 dark:bg-slate-900/70"
               value={decision}
               onChange={(e) => setChosen(e.target.value as RouteOption)}
             >
-              {ROUTES.map((r) => (
+              {ROUTES.filter((r) =>
+                role === "advisor" ? r !== "sas" || record.consent === "sas" : true,
+              ).map((r) => (
                 <option key={r} value={r}>
                   {routeLabel(r, locale)}
                 </option>
               ))}
             </select>
           </label>
+          {role === "advisor" && decision === "sas" && record.consent !== "sas" ? (
+            <p className="text-sm text-amber-800 dark:text-amber-200" role="status">
+              {ar
+                ? "اختيار خدمات الإتاحة يحتاج موافقة الطالب أولاً — أرسل ملخص التسليم."
+                : "SAS needs the student’s consent first — send a handoff summary for approval."}
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-3">
             <Button type="button" onClick={() => confirmRoute(record.id, decision, me)}>
               {t.cases.confirm}
