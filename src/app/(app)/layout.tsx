@@ -15,7 +15,7 @@ export default function AppShellLayout({
       >
         <AppHeader />
       </Suspense>
-      <main className="flex-1 bg-[#F9FBFC] dark:bg-[#0B1615]">{children}</main>
+      <main className="flex-1 bg-[var(--background)]">{children}</main>
     </>
   );
 }
