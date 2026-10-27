@@ -7,8 +7,9 @@
 This is the social model of disability and Universal Design for Learning (UDL),
 turned into a product loop. Two halves, one cycle.
 
-Status: **concept / not implemented yet.** Builds on the existing Check-in
-(tool trials, accuracy with vs without a tool) and Class Insights.
+Status: **implemented in the demo** (`/passport`, `/adjustments`, `/barriers`).
+Builds on the Check-in tool trials (accuracy with vs without a tool); Barrier Map
+replaces the old Class Insights page.
 
 ---
 
@@ -94,13 +95,17 @@ pain point that SAS demand exceeds capacity.
   timer settings) be pushed there directly?
 - Impact numbers in the demo are simulated; real ones need a pilot.
 
-## Implementation sketch
+## Implementation
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Passport data | `MockStoreProvider` | Persist Check-in `attempts` per student; derive with/without deltas |
-| Passport UI | `/my-case` or new `/passport` | Share per course, revoke, QR |
-| Faculty view | `/class-insights` | Shared passports → “accept adjustment” |
-| Barrier Map | `/dashboard` or new `/barriers` | Heatmap course × week, n < 10 hidden |
-| Fix simulation | Barrier Map | “Apply fix” → recompute referrals & SAS wait |
-| Demo script | `DemoConductor` | Rewrite steps around the loop |
+| Evidence model | `src/lib/passport.ts` | Adjustments, `verdict()` (≥10-point gain, ≥3 answers), merge across sessions |
+| Passport data | `MockStoreProvider` | Check-in adds today's with/without counts for any consent except “private” |
+| Passport UI | `/passport` | Card, share per course with preview of exactly what is sent, revoke, opt-in contribution |
+| Faculty view | `/adjustments` | Only shared adjustments + evidence; accept / “let's talk first”; revoked → hidden |
+| Barrier Map | `/barriers`, `src/lib/mock/barriers.ts` | Heatmap course × week, sequential ramp, n < 10 hatched and hidden |
+| Fix simulation | `projectImpact()` | Apply / undo fix → students reached, referrals avoided, SAS wait |
+| Live counters | `/dashboard` | Passport adjustments accepted, barriers fixed |
+| Demo script | `DemoConductor` | 7 steps around the loop |
+
+Not built: QR sharing, pushing fixes into the LMS, real aggregation pipeline.

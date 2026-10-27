@@ -9,20 +9,25 @@ import {
 } from "react";
 import {
   dashboardSeries,
-  classInsightsData,
   pilotTargets,
   sasCapacityFull,
   sasWaitDays,
   seedCases,
   seedConcerns,
+  seedPassport,
 } from "./seed";
+import { COURSES, mergeEvidence } from "@/lib/passport";
 import { createPersistentStore } from "./persist";
 import type {
+  AdjustmentKey,
   CaseRecord,
   CaseStatus,
   Concern,
   ConsentChoice,
   HandoffEntry,
+  LearningPassport,
+  PassportEvidence,
+  PassportShare,
   Role,
   RouteOption,
 } from "@/lib/types";
@@ -33,12 +38,18 @@ type DemoState = {
   concerns: Concern[];
   cases: CaseRecord[];
   savedCheckIn: SavedCheckIn | null;
+  passport: LearningPassport;
+  shares: PassportShare[];
+  appliedFixes: string[];
 };
 
-const demoStore = createPersistentStore<DemoState>("sanad-demo-v2", {
+const demoStore = createPersistentStore<DemoState>("sanad-demo-v3", {
   concerns: seedConcerns,
   cases: seedCases,
   savedCheckIn: null,
+  passport: seedPassport,
+  shares: [],
+  appliedFixes: [],
 });
 
 const DEMO_STUDENT = { name: "Layla Al Mansoori", id: "stu-layla" };
@@ -63,10 +74,18 @@ type MockStoreValue = {
   draftHandoff: (id: string, text: string, to: RouteOption) => void;
   respondHandoff: (id: string, approve: boolean) => void;
   studentCase: (studentId?: string) => CaseRecord | undefined;
+  passport: LearningPassport;
+  shares: PassportShare[];
+  savePassport: (evidence: Partial<Record<AdjustmentKey, PassportEvidence>>) => void;
+  setContribute: (on: boolean) => void;
+  sharePassport: (course: string, adjustments: AdjustmentKey[]) => void;
+  respondShare: (id: string, accept: boolean) => void;
+  revokeShare: (id: string) => void;
+  appliedFixes: string[];
+  applyFix: (id: string, applied: boolean) => void;
   resetDemo: () => void;
   dashboard: typeof dashboardSeries;
   pilotTargets: typeof pilotTargets;
-  classInsights: typeof classInsightsData;
   sasFull: boolean;
   sasWaitDays: number;
 };
@@ -348,6 +367,71 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const savePassport = useCallback(
+    (evidence: Partial<Record<AdjustmentKey, PassportEvidence>>) => {
+      demoStore.set((s) => ({
+        ...s,
+        passport: {
+          ...s.passport,
+          sessions: s.passport.sessions + 1,
+          updatedAt: now(),
+          evidence: mergeEvidence(s.passport.evidence, evidence),
+        },
+      }));
+    },
+    [],
+  );
+
+  const setContribute = useCallback((on: boolean) => {
+    demoStore.set((s) => ({ ...s, passport: { ...s.passport, contribute: on } }));
+  }, []);
+
+  const sharePassport = useCallback((course: string, adjustments: AdjustmentKey[]) => {
+    const instructor = COURSES.find((c) => c.course === course)?.instructor ?? "Instructor";
+    const share: PassportShare = {
+      id: uid("share"),
+      course,
+      instructor,
+      adjustments,
+      status: "pending",
+      createdAt: now(),
+    };
+    // One live share per course: a new one replaces the old.
+    demoStore.set((s) => ({
+      ...s,
+      shares: [share, ...s.shares.filter((x) => x.course !== course)],
+    }));
+  }, []);
+
+  const respondShare = useCallback((id: string, accept: boolean) => {
+    demoStore.set((s) => ({
+      ...s,
+      shares: s.shares.map((x) =>
+        x.id === id && x.status === "pending"
+          ? { ...x, status: accept ? "accepted" : "discuss", respondedAt: now() }
+          : x,
+      ),
+    }));
+  }, []);
+
+  const revokeShare = useCallback((id: string) => {
+    demoStore.set((s) => ({
+      ...s,
+      shares: s.shares.map((x) =>
+        x.id === id ? { ...x, status: "revoked", respondedAt: now() } : x,
+      ),
+    }));
+  }, []);
+
+  const applyFix = useCallback((id: string, applied: boolean) => {
+    demoStore.set((s) => ({
+      ...s,
+      appliedFixes: applied
+        ? [...new Set([...s.appliedFixes, id])]
+        : s.appliedFixes.filter((x) => x !== id),
+    }));
+  }, []);
+
   const studentCase = useCallback(
     (studentId = DEMO_STUDENT.id) =>
       state.cases.find(
@@ -372,10 +456,18 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
       draftHandoff,
       respondHandoff,
       studentCase,
+      passport: state.passport,
+      shares: state.shares,
+      savePassport,
+      setContribute,
+      sharePassport,
+      respondShare,
+      revokeShare,
+      appliedFixes: state.appliedFixes,
+      applyFix,
       resetDemo: demoStore.reset,
       dashboard: dashboardSeries,
       pilotTargets,
-      classInsights: classInsightsData,
       sasFull: sasCapacityFull,
       sasWaitDays,
     }),
@@ -392,6 +484,12 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
       draftHandoff,
       respondHandoff,
       studentCase,
+      savePassport,
+      setContribute,
+      sharePassport,
+      respondShare,
+      revokeShare,
+      applyFix,
     ],
   );
 

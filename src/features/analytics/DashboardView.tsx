@@ -21,7 +21,7 @@ const AXIS = { fontSize: 12, fill: "#64748b" };
 
 export function DashboardView() {
   const { t, locale } = useLocale();
-  const { dashboard, pilotTargets, cases } = useMockStore();
+  const { dashboard, pilotTargets, cases, shares, appliedFixes } = useMockStore();
   const ar = locale === "ar";
   const [equityAsTable, setEquityAsTable] = useState(false);
 
@@ -35,6 +35,8 @@ export function DashboardView() {
     shared: cases.filter((c) => c.handoffSummary?.status === "approved").length,
     disputes: cases.filter((c) => c.handoffs.some((h) => h.to === "Recourse")).length,
     views: cases.reduce((n, c) => n + (c.audit?.length ?? 0), 0),
+    adjustments: shares.filter((s) => s.status === "accepted").length,
+    fixes: appliedFixes.length,
   };
 
   const k = dashboard.kpis;
@@ -85,12 +87,14 @@ export function DashboardView() {
           <span className="h-2 w-2 animate-pulse rounded-full bg-[#4DB3B0]" aria-hidden />
           {ar ? "مباشر من هذا العرض" : "Live from this demo"}
         </h2>
-        <dl className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <dl className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {[
             [ar ? "حالات مفتوحة" : "Open cases", live.open],
             [ar ? "مشاركات بموافقة" : "Shares with consent", live.shared],
             [ar ? "طلبات اعتراض" : "Recourse requests", live.disputes],
             [ar ? "اطلاعات مسجّلة" : "Logged file views", live.views],
+            [ar ? "تعديلات بالجواز" : "Passport adjustments", live.adjustments],
+            [ar ? "عوائق أُزيلت" : "Barriers fixed", live.fixes],
           ].map(([label, n]) => (
             <div key={String(label)}>
               <dt className="text-xs text-white/70">{label}</dt>

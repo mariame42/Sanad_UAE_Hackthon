@@ -2,13 +2,17 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useHydrated } from "@/components/ui/Time";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
 import { useRole } from "@/lib/roles/RoleProvider";
 import type { Role } from "@/lib/types";
 
 type Step = { role: Role; href: string; title: string; cue: string };
 
-/** The 3-minute pitch script from the brief, one click per step. */
+/**
+ * The pitch script, one click per step. Story: diagnose the barrier, not the
+ * student — Learning Passport for one student, Barrier Map for everyone.
+ */
 const STEPS: Step[] = [
   {
     role: "faculty",
@@ -20,31 +24,37 @@ const STEPS: Step[] = [
     role: "student",
     href: "/check-in",
     title: "Student takes the Check-in",
-    cue: "Camera off. Skip one reading question, turn on Text-to-speech for the Tool trial → “Text-to-speech helped you” → Talk to a learning coach.",
+    cue: "Skip one reading question, turn on Text-to-speech for the Tool trial → “Text-to-speech helped you” → Talk to a learning coach.",
+  },
+  {
+    role: "student",
+    href: "/passport",
+    title: "Learning Passport, not a diagnosis",
+    cue: "Evidence of what works: with vs without. Pick ENG 101 → “Exactly what Dr. Sara Khan will see” → Share.",
+  },
+  {
+    role: "faculty",
+    href: "/adjustments",
+    title: "Instructor accepts in one click",
+    cue: "No diagnosis attached — none needed. Accept adjustment. Weeks of paperwork → one click.",
   },
   {
     role: "advisor",
     href: "/cases",
-    title: "Advisor confirms the route",
-    cue: "Open Layla’s case: AI route + why. Pick SAS, Confirm route, Draft with AI, Send to student for approval. Show the Privacy Lens.",
-  },
-  {
-    role: "student",
-    href: "/my-case",
-    title: "Student stays in control",
-    cue: "Approve and share. Point at the tracker, “Who viewed my file” and the I disagree button.",
+    title: "Advisor routes — student approves",
+    cue: "Open Layla’s case: AI suggests, human decides. Show the Privacy Lens (Diagnosis: does not exist).",
   },
   {
     role: "leadership",
-    href: "/dashboard",
-    title: "Leadership sees outcomes",
-    cue: "Live counters from this demo, pilot KPI targets, demand vs capacity, equity view (n < 10 hidden).",
+    href: "/barriers",
+    title: "Barrier Map: fix the course",
+    cue: "BIO 210 week 3 glows: scanned PDF. Apply fix → counters move, SAS wait drops. Fix two more.",
   },
   {
     role: "student",
     href: "/principles",
-    title: "Close: what Sanad never does",
-    cue: "No diagnosis. No surveillance. No labels. No decision without a human.",
+    title: "Close",
+    cue: "“We don’t look for what’s wrong with students. We find what’s wrong with the learning — and fix it for everyone.”",
   },
 ];
 
@@ -55,10 +65,12 @@ export function DemoConductor() {
   const pathname = usePathname();
   const { role, setRole } = useRole();
   const { resetDemo } = useMockStore();
+  // Role lives in sessionStorage: match the server HTML until hydrated.
+  const hydrated = useHydrated();
 
-  const activeIndex = STEPS.findIndex(
-    (s) => s.role === role && pathname.startsWith(s.href),
-  );
+  const activeIndex = hydrated
+    ? STEPS.findIndex((s) => s.role === role && pathname.startsWith(s.href))
+    : -1;
 
   function go(step: Step) {
     setRole(step.role);
@@ -74,7 +86,7 @@ export function DemoConductor() {
           className="mb-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900"
         >
           <div className="flex items-center justify-between bg-[#0F3D3E] px-4 py-3 text-white">
-            <p className="text-sm font-bold">🎬 Demo script · 3 min</p>
+            <p className="text-sm font-bold">🎬 Demo script · 4 min</p>
             <button
               type="button"
               onClick={() => setOpen(false)}

@@ -79,6 +79,33 @@ export type CaseRecord = {
   createdAt: string;
 };
 
+/** Things a student can try in Check-in; also the adjustments a Passport can ask for. */
+export type AdjustmentKey = "tts" | "spacing" | "dyslexiaFont" | "chunking" | "untimed";
+
+/** Correct / total answers with and without one adjustment, summed over sessions. */
+export type PassportEvidence = {
+  with: [correct: number, total: number];
+  without: [correct: number, total: number];
+};
+
+export type LearningPassport = {
+  sessions: number;
+  updatedAt: string;
+  evidence: Partial<Record<AdjustmentKey, PassportEvidence>>;
+  /** Opt-in: anonymous contribution to the course Barrier Map (n ≥ 10 groups only). */
+  contribute: boolean;
+};
+
+export type PassportShare = {
+  id: string;
+  course: string;
+  instructor: string;
+  adjustments: AdjustmentKey[];
+  status: "pending" | "accepted" | "discuss" | "revoked";
+  createdAt: string;
+  respondedAt?: string;
+};
+
 export type CheckInStrategy = {
   id: string;
   titleEn: string;

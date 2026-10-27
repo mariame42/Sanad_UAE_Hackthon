@@ -41,13 +41,15 @@ export function navForRole(role: Role): { href: string; key: string }[] {
     case "student":
       return [
         { href: "/check-in", key: "checkIn" },
+        { href: "/passport", key: "passport" },
         { href: "/my-case", key: "myCase" },
         { href: "/principles", key: "principles" },
       ];
     case "faculty":
       return [
         { href: "/concern", key: "concern" },
-        { href: "/class-insights", key: "classInsights" },
+        { href: "/adjustments", key: "adjustments" },
+        { href: "/barriers", key: "barriers" },
         { href: "/principles", key: "principles" },
       ];
     case "advisor":
@@ -59,7 +61,7 @@ export function navForRole(role: Role): { href: string; key: string }[] {
     case "leadership":
       return [
         { href: "/dashboard", key: "dashboard" },
-        { href: "/class-insights", key: "classInsights" },
+        { href: "/barriers", key: "barriers" },
         { href: "/principles", key: "principles" },
       ];
   }

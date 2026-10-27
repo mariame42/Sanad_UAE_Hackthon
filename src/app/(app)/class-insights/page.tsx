@@ -1,5 +1,6 @@
-import { ClassInsightsView } from "@/features/analytics/ClassInsightsView";
+import { redirect } from "next/navigation";
 
+/** Class Insights grew into the Barrier Map. */
 export default function ClassInsightsPage() {
-  return <ClassInsightsView />;
+  redirect("/barriers");
 }

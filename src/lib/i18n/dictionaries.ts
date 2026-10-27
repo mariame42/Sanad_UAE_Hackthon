@@ -13,7 +13,9 @@ export const dictionaries = {
       cases: "Cases",
       myCase: "My case",
       dashboard: "Dashboard",
-      classInsights: "Class Insights",
+      passport: "Passport",
+      adjustments: "Adjustments",
+      barriers: "Barrier Map",
       principles: "Principles",
     },
     roles: {
@@ -131,11 +133,6 @@ export const dictionaries = {
       equity: "Equity view (n ≥ 10 only)",
       summary: "Summary table",
     },
-    classInsights: {
-      title: "Class Insights",
-      subtitle:
-        "Course-level patterns only. No individual student is ever flagged.",
-    },
     principlesPage: {
       title: "What Sanad never does",
       items: [
@@ -159,7 +156,9 @@ export const dictionaries = {
       cases: "الحالات",
       myCase: "حالتي",
       dashboard: "لوحة المؤشرات",
-      classInsights: "رؤى الصف",
+      passport: "جواز التعلّم",
+      adjustments: "التعديلات",
+      barriers: "خريطة العوائق",
       principles: "المبادئ",
     },
     roles: {
@@ -275,10 +274,6 @@ export const dictionaries = {
       trust: "ثقة الطلاب (من 5)",
       equity: "عرض الإنصاف (n ≥ 10 فقط)",
       summary: "جدول ملخص",
-    },
-    classInsights: {
-      title: "رؤى الصف",
-      subtitle: "أنماط على مستوى المقرر فقط. لا يُعلَّم أي طالب فردياً.",
     },
     principlesPage: {
       title: "ما لا يفعله سند أبداً",

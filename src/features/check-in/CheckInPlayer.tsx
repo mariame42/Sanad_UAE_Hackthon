@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
-import type { ConsentChoice } from "@/lib/types";
+import { ADJUSTMENTS } from "@/lib/passport";
+import type { AdjustmentKey, ConsentChoice, PassportEvidence } from "@/lib/types";
 import { FocusModeHint } from "./FocusModeHint";
 import {
   activities,
@@ -38,13 +40,6 @@ const FORMAT: Partial<Record<ActivityId, "text" | "audio" | "video">> = {
   watch: "video",
 };
 
-const TOOL_LABEL: Record<ToolKey, { en: string; ar: string }> = {
-  tts: { en: "Text-to-speech", ar: "تحويل النص إلى كلام" },
-  spacing: { en: "Wider spacing", ar: "التباعد الأوسع" },
-  dyslexiaFont: { en: "Reading-friendly font", ar: "الخط المريح للقراءة" },
-  chunking: { en: "Chunking", ar: "تقسيم النص" },
-};
-
 const TOOL_HOWTO: Record<ToolKey, { en: string; ar: string }> = {
   tts: {
     en: "Turn it on: LMS → Accessibility → Read aloud. In Word: Review → Read Aloud.",
@@ -69,9 +64,27 @@ function accuracy(list: Attempt[]) {
   return total ? list.reduce((n, a) => n + a.correct, 0) / total : null;
 }
 
+function tally(list: Attempt[]): [number, number] {
+  return [list.reduce((n, a) => n + a.correct, 0), list.reduce((n, a) => n + a.total, 0)];
+}
+
+/** Today's with/without comparisons, added to the student's Learning Passport. */
+function passportEvidence(attempts: Attempt[]) {
+  const out: Partial<Record<AdjustmentKey, PassportEvidence>> = {};
+  for (const key of Object.keys(TOOL_HOWTO) as ToolKey[]) {
+    const on = attempts.filter((a) => a.tools[key]);
+    if (on.length) out[key] = { with: tally(on), without: tally(attempts.filter((a) => !a.tools[key])) };
+  }
+  const timed = attempts.filter((a) => a.id === "timed");
+  if (timed.length) {
+    out.untimed = { with: tally(attempts.filter((a) => a.id !== "timed")), without: tally(timed) };
+  }
+  return out;
+}
+
 export function CheckInPlayer() {
   const { t, locale } = useLocale();
-  const { addCaseFromCheckIn } = useMockStore();
+  const { addCaseFromCheckIn, savePassport } = useMockStore();
   const router = useRouter();
 
   const [phase, setPhase] = useState<Phase>("intro");
@@ -94,14 +107,14 @@ export function CheckInPlayer() {
 
   const insight = useMemo(() => {
     const strategies: { title: string; body: string }[] = [];
-    for (const key of Object.keys(TOOL_LABEL) as ToolKey[]) {
+    for (const key of Object.keys(TOOL_HOWTO) as ToolKey[]) {
       const on = attempts.filter((a) => a.tools[key]);
       if (!on.length) continue;
       const withAcc = accuracy(on)!;
       const withoutAcc = accuracy(attempts.filter((a) => !a.tools[key]));
       const helped = withoutAcc !== null && withAcc > withoutAcc;
       const pct = (n: number) => Math.round(n * 100);
-      const name = TOOL_LABEL[key][locale];
+      const name = ADJUSTMENTS[key].tool[locale];
       strategies.push({
         title: helped
           ? ar
@@ -180,9 +193,11 @@ export function CheckInPlayer() {
       choice,
       strategies.map((s) => s.title),
     );
+    // The Passport belongs to the student: it is kept for any choice but “private”.
+    if (choice !== "private") savePassport(passportEvidence(attempts));
     setPhase("done");
-    if (choice === "coach" || choice === "sas") {
-      setTimeout(() => router.push("/my-case"), 1400);
+    if (choice !== "private") {
+      setTimeout(() => router.push(choice === "saved" ? "/passport" : "/my-case"), 1400);
     }
   }
 
@@ -569,8 +584,8 @@ function ConsentReceipt({ choice, ar }: { choice: ConsentChoice; ar: boolean }) 
       ar: ["لا شيء", "لا أحد", "يُحذف عند مغادرة الصفحة"],
     },
     saved: {
-      en: ["Your strategies", "Only you", "Until you delete them"],
-      ar: ["استراتيجياتك", "أنت فقط", "حتى تحذفها"],
+      en: ["Your strategies + Learning Passport", "Only you", "Until you delete them"],
+      ar: ["استراتيجياتك + جواز التعلّم", "أنت فقط", "حتى تحذفها"],
     },
     coach: {
       en: ["Strategy summary (no scores)", "A learning coach (L2)", "End of semester, unless you keep it"],
@@ -598,10 +613,19 @@ function ConsentReceipt({ choice, ar }: { choice: ConsentChoice; ar: boolean }) 
         ))}
       </dl>
       <p className="mt-3 text-xs text-slate-500">
-        {ar
-          ? "يمكنك سحب الموافقة في أي وقت من «حالتي»."
-          : "You can withdraw consent any time from “My case”."}
+        {choice === "private"
+          ? ar
+            ? "لم يُضف شيء إلى جواز التعلّم."
+            : "Nothing was added to your Learning Passport."
+          : ar
+            ? "نتائج اليوم أُضيفت إلى جواز التعلّم — يبقى معك ولا يُشارك إلا بقرارك. يمكنك سحب الموافقة في أي وقت."
+            : "Today’s results were added to your Learning Passport — it stays with you and is shared only when you decide. You can withdraw consent any time."}
       </p>
+      {choice !== "private" ? (
+        <Link href="/passport" className="mt-2 inline-block text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
+          🛂 {ar ? "افتح جواز التعلّم" : "Open my Learning Passport"} →
+        </Link>
+      ) : null}
     </div>
   );
 }

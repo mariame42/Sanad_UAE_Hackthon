@@ -53,9 +53,9 @@ const features = [
   },
   {
     n: "04",
-    href: "/class-insights",
-    title: "Class Insights",
-    body: "Faculty see anonymous class-level learning patterns to improve teaching for everyone.",
+    href: "/barriers",
+    title: "Barrier Map",
+    body: "Diagnose the course, not the student: anonymous patterns show where materials get in the way, so they are fixed for everyone.",
     bg: "bg-[#FBF0E8] dark:bg-[#2E241C]",
     accent: "text-[#C07848] dark:text-[#E0A878]",
     btn: "bg-[#F0C4A0] text-[#7A4420] hover:bg-[#E8B48C] dark:bg-[#7A4420] dark:text-[#F8E0C8] dark:hover:bg-[#8A5430]",

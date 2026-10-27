@@ -32,9 +32,10 @@ export function MyCaseView() {
         <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.myCase.title}</h1>
         <p className="mt-4 text-slate-600 dark:text-slate-300">{t.myCase.none}</p>
         {savedCheckIn ? <SavedResults strategies={savedCheckIn.strategies} ar={ar} /> : null}
-        <Link href="/check-in" className="mt-6 inline-block text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
-          {t.checkIn.title} →
-        </Link>
+        <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
+          <Link href="/check-in">{t.checkIn.title} →</Link>
+          <Link href="/passport">🛂 {ar ? "جواز التعلّم" : "My Learning Passport"} →</Link>
+        </div>
       </div>
     );
   }
@@ -52,7 +53,10 @@ export function MyCaseView() {
     <div className="mx-auto max-w-2xl px-5 py-10 sm:px-8">
       <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">{t.myCase.title}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        {ar ? "أنت ترى كل ما يراه الآخرون عنك." : "You can see everything others can see about you."}
+        {ar ? "أنت ترى كل ما يراه الآخرون عنك." : "You can see everything others can see about you."}{" "}
+        <Link href="/passport" className="font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
+          🛂 {ar ? "جواز التعلّم" : "My Learning Passport"} →
+        </Link>
       </p>
 
       {record.status === "offer_sent" ? (
