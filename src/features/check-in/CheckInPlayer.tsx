@@ -28,9 +28,26 @@ import { QuestionBar } from "./QuestionBar";
 import { ReadingStage } from "./ReadingStage";
 import { ToolsPanel, type Tools } from "./ToolsPanel";
 
-type Phase = "intro" | "play" | "results" | "consent" | "done";
+type Phase = "intro" | "play" | "analyzing" | "results" | "consent" | "done";
 type PlayStage = "content" | "questions";
 type ToolKey = "tts" | "spacing" | "dyslexiaFont" | "chunking";
+
+const ANALYZE_STEPS = [
+  {
+    en: "Reading your answers across text, audio, and video…",
+    ar: "قراءة إجاباتك عبر النص والصوت والفيديو…",
+  },
+  {
+    en: "Comparing results with tools on vs off…",
+    ar: "مقارنة النتائج مع الأدوات ومعطّلة…",
+  },
+  {
+    en: "Building strategies that fit you — not a label…",
+    ar: "بناء استراتيجيات تناسبك — بلا تصنيف…",
+  },
+] as const;
+
+const ANALYZE_STEP_MS = 1850;
 
 type Attempt = {
   id: ActivityId;
@@ -108,11 +125,15 @@ export function CheckInPlayer() {
   // Off by default — loading MediaPipe from the CDN can hang the tab offline.
   const [cameraOn, setCameraOn] = useState(false);
   const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
+  const [analyzeStep, setAnalyzeStep] = useState(0);
 
   const ids = path === "quick" ? QUICK_IDS : FULL_IDS;
   const current = activities.find((a) => a.id === ids[index])!;
   const journeyMode: ModeId | "tools" =
-    phase === "results" || phase === "consent" || phase === "done"
+    phase === "results" ||
+    phase === "consent" ||
+    phase === "done" ||
+    phase === "analyzing"
       ? "tools"
       : isModeId(current.id)
         ? current.id
@@ -144,12 +165,33 @@ export function CheckInPlayer() {
     for (let i = 0; i < index; i++) {
       set.add(ids[i]);
     }
-    if (phase === "results" || phase === "consent" || phase === "done") {
+    if (
+      phase === "results" ||
+      phase === "consent" ||
+      phase === "done" ||
+      phase === "analyzing"
+    ) {
       set.add("read");
       set.add("watch");
     }
     return set;
   }, [ids, index, phase]);
+
+  useEffect(() => {
+    if (phase !== "analyzing") return;
+    const timers: number[] = [];
+    for (let i = 1; i < ANALYZE_STEPS.length; i++) {
+      timers.push(
+        window.setTimeout(() => setAnalyzeStep(i), i * ANALYZE_STEP_MS),
+      );
+    }
+    timers.push(
+      window.setTimeout(() => {
+        setPhase("results");
+      }, ANALYZE_STEPS.length * ANALYZE_STEP_MS),
+    );
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, [phase]);
 
   const currentQuestions = current.questions;
   const currentQuestion = currentQuestions[qIndex];
@@ -289,7 +331,8 @@ export function CheckInPlayer() {
     ]);
     if (index + 1 >= ids.length) {
       setFocusSummary(summarize(focus.snapshot()));
-      setPhase("results");
+      setAnalyzeStep(0);
+      setPhase("analyzing");
       return;
     }
     setIndex((i) => i + 1);
@@ -385,6 +428,96 @@ export function CheckInPlayer() {
           >
             {t.checkIn.start}
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "analyzing") {
+    return (
+      <div className="sanad-checkin-bg min-h-[calc(100vh-5rem)]">
+        <div className="mx-auto max-w-lg px-5 py-12 sm:px-8">
+          <PrivacyPill locale={locale} />
+          <div className="mt-6">
+            <JourneyBar locale={locale} current="tools" completed={completed} />
+          </div>
+          <div
+            className="mt-12 rounded-3xl border border-slate-200/80 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className="inline-block h-9 w-9 animate-spin rounded-full border-[3px] border-[var(--sanad-sea)]/25 border-t-[var(--sanad-sea)]"
+                aria-hidden
+              />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--sanad-sea)]">
+                  {ar ? "الذكاء الاصطناعي يعمل" : "AI is working"}
+                </p>
+                <h1 className="text-xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+                  {ar ? "نجهّز ما ساعدك اليوم" : "Preparing what helped you today"}
+                </h1>
+              </div>
+            </div>
+
+            <ol className="mt-8 space-y-4">
+              {ANALYZE_STEPS.map((step, i) => {
+                const done = i < analyzeStep;
+                const active = i === analyzeStep;
+                return (
+                  <li key={step.en} className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${
+                        done
+                          ? "bg-[var(--sanad-sea)] text-white"
+                          : active
+                            ? "bg-[var(--sanad-indigo)] text-white ring-4 ring-[var(--sanad-indigo)]/15"
+                            : "bg-slate-100 text-slate-400 dark:bg-slate-800"
+                      }`}
+                      aria-hidden
+                    >
+                      {done ? (
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        i + 1
+                      )}
+                    </span>
+                    <p
+                      className={`text-sm leading-snug ${
+                        active
+                          ? "font-semibold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]"
+                          : done
+                            ? "text-slate-500"
+                            : "text-slate-400"
+                      }`}
+                    >
+                      {ar ? step.ar : step.en}
+                      {active ? (
+                        <span className="ms-1 inline-flex gap-0.5" aria-hidden>
+                          <span className="animate-pulse">.</span>
+                          <span className="animate-pulse [animation-delay:150ms]">.</span>
+                          <span className="animate-pulse [animation-delay:300ms]">.</span>
+                        </span>
+                      ) : null}
+                    </p>
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="mt-6 text-xs text-slate-400">
+              {ar
+                ? "لا تشخيص ولا درجة خطر — استراتيجيات فقط."
+                : "No diagnosis, no risk score — strategies only."}
+            </p>
+          </div>
         </div>
       </div>
     );
