@@ -32,6 +32,9 @@ export type Concern = {
   rawNote: string;
   rewrittenNote: string;
   action: "offer_to_advisor" | "recommend_checkin_class";
+  /** What the faculty member is allowed to see back (L1 only). */
+  outcome: "support_offered" | "support_accepted" | "class_invited";
+  caseId?: string;
   createdAt: string;
 };
 
@@ -40,6 +43,19 @@ export type HandoffEntry = {
   from: string;
   to: string;
   note: string;
+};
+
+export type AuditEntry = {
+  at: string;
+  who: string;
+  role: Role;
+  what: string;
+};
+
+export type HandoffSummary = {
+  text: string;
+  to: RouteOption;
+  status: "pending" | "approved" | "declined";
 };
 
 export type CaseRecord = {
@@ -57,6 +73,9 @@ export type CaseRecord = {
   confirmedRoute: RouteOption | null;
   handoffs: HandoffEntry[];
   waitDays?: number;
+  consent?: ConsentChoice;
+  handoffSummary?: HandoffSummary;
+  audit?: AuditEntry[];
   createdAt: string;
 };
 
