@@ -8,6 +8,7 @@ import { Time } from "@/components/ui/Time";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
 import { PASSPORT_COURSES } from "@/lib/passport";
+import { formatSec, PART_LABEL } from "@/features/check-in/focus/focusStats";
 import { STUDENT_PROFILE } from "@/lib/student-profile";
 import { useRole } from "@/lib/roles/RoleProvider";
 
@@ -293,6 +294,38 @@ export function PassportView() {
                       </div>
                     ))}
                   </div>
+
+                  {passport.focus ? (
+                    <>
+                      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-[#8a6d1f]">
+                        {ar ? "التركيز (الكاميرا)" : "Focus (camera)"}
+                      </h3>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {[
+                          [ar ? "مركّز" : "Focused", `${passport.focus.pct}%`],
+                          [ar ? "أطول فترة" : "Longest", formatSec(passport.focus.longestSec)],
+                          [ar ? "التفات" : "Look-aways", String(passport.focus.lookAways)],
+                        ].map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="rounded-md border border-[#1b2a4a]/10 bg-white/80 px-2 py-2 text-center dark:border-white/10 dark:bg-white/5"
+                          >
+                            <p className="text-[0.6rem] font-bold uppercase tracking-wide text-[#8a6d1f]">
+                              {label}
+                            </p>
+                            <p className="mt-0.5 text-lg font-bold tabular-nums" dir="ltr">
+                              {value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        {passport.focus.parts
+                          .map((p) => `${PART_LABEL[p.part][locale]} ${p.pct}%`)
+                          .join(" · ")}
+                      </p>
+                    </>
+                  ) : null}
 
                   <div className="mt-auto flex items-end justify-between gap-3 border-t border-[#8a6d1f]/25 pt-4">
                     <div>

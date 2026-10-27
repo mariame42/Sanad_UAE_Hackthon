@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
-import type { ConsentChoice } from "@/lib/types";
+import type { ConsentChoice, FocusSummary } from "@/lib/types";
 import { AudioPlayerBar } from "./AudioPlayerBar";
-import { CameraNotice } from "./CameraNotice";
 import {
   activities,
   FULL_IDS,
@@ -21,6 +20,9 @@ import {
   type ActivityId,
   type ModeId,
 } from "./content";
+import { FocusOptIn, FocusPanel, FocusResults } from "./focus/FocusCamera";
+import { summarize } from "./focus/focusStats";
+import { useFocusTracker } from "./focus/useFocusTracker";
 import { JourneyBar } from "./JourneyBar";
 import { QuestionBar } from "./QuestionBar";
 import { ReadingStage } from "./ReadingStage";
@@ -103,6 +105,8 @@ export function CheckInPlayer() {
   });
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [consent, setConsent] = useState<ConsentChoice | null>(null);
+  const [cameraOn, setCameraOn] = useState(true);
+  const [focusSummary, setFocusSummary] = useState<FocusSummary | null>(null);
 
   const ids = path === "quick" ? QUICK_IDS : FULL_IDS;
   const current = activities.find((a) => a.id === ids[index])!;
@@ -113,6 +117,26 @@ export function CheckInPlayer() {
         ? current.id
         : "read";
   const mode: ModeId = isModeId(current.id) ? current.id : "read";
+  const focus = useFocusTracker(
+    cameraOn && phase === "play",
+    `${current.id}:${playStage}`,
+  );
+  const lookingAway = focus.status === "on" && focus.live.gaze !== "focused";
+
+  // Focus Mode adaptation: the lesson video waits while the student looks away.
+  const autoPausedRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "play" || mode !== "watch" || playStage !== "content") return;
+    const video = document.querySelector<HTMLVideoElement>("video[data-lesson-video]");
+    if (!video) return;
+    if (lookingAway && !video.paused) {
+      video.pause();
+      autoPausedRef.current = true;
+    } else if (!lookingAway && autoPausedRef.current) {
+      autoPausedRef.current = false;
+      void video.play().catch(() => {});
+    }
+  }, [lookingAway, phase, mode, playStage]);
 
   const completed = useMemo(() => {
     const set = new Set<string>();
@@ -263,6 +287,7 @@ export function CheckInPlayer() {
       },
     ]);
     if (index + 1 >= ids.length) {
+      setFocusSummary(summarize(focus.snapshot()));
       setPhase("results");
       return;
     }
@@ -283,7 +308,7 @@ export function CheckInPlayer() {
   function chooseConsent(choice: ConsentChoice) {
     setConsent(choice);
     const titles = strategies.map((s) => s.title);
-    addCaseFromCheckIn(choice, titles, attempts);
+    addCaseFromCheckIn(choice, titles, attempts, focusSummary);
     setPhase("done");
     if (choice === "saved") {
       setTimeout(() => router.push("/passport"), 900);
@@ -339,12 +364,18 @@ export function CheckInPlayer() {
             </Button>
           </div>
           <div className="mt-6">
-            <CameraNotice locale={locale} />
+            <FocusOptIn
+              locale={locale}
+              on={cameraOn}
+              onToggle={() => setCameraOn((v) => !v)}
+            />
           </div>
           <Button
             type="button"
             className="mt-6 !bg-[var(--sanad-indigo)]"
             onClick={() => {
+              focus.reset();
+              setFocusSummary(null);
               setIndex(0);
               setQIndex(0);
               setPlayStage("content");
@@ -428,6 +459,8 @@ export function CheckInPlayer() {
                 : "This is not a “learning style” or a label — just what helped today. Nothing is saved unless you choose."}
             </p>
           </section>
+
+          {focusSummary ? <FocusResults locale={locale} focus={focusSummary} /> : null}
 
           {insight.persistent ? (
             <p className="mt-4 rounded-3xl bg-[#FBF0E8] p-4 text-sm text-slate-700 dark:bg-[#2E241C] dark:text-slate-200">
@@ -517,13 +550,21 @@ export function CheckInPlayer() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[16.5rem_minmax(0,1fr)]">
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <FocusPanel
+              locale={locale}
+              on={cameraOn}
+              onToggle={() => setCameraOn((v) => !v)}
+              status={focus.status}
+              live={focus.live}
+              videoRef={focus.videoRef}
+              canvasRef={focus.canvasRef}
+            />
             <ToolsPanel
               locale={locale}
               tools={tools}
               onChange={setTools}
               labels={toolLabels}
             />
-            <CameraNotice locale={locale} />
           </div>
 
           {playStage === "content" ? (

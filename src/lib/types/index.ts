@@ -136,6 +136,28 @@ export type PassportShare = {
   respondedAt?: string;
 };
 
+/** What the student was doing while the camera measured focus. */
+export type FocusPart = "text" | "video" | "questions";
+
+/** Camera focus measurements from one Check-in (computed in the browser; no video kept). */
+export type FocusSummary = {
+  at: string;
+  /** Share of camera time the student was looking at the screen. */
+  pct: number;
+  /** Longest uninterrupted stretch of focus, seconds. */
+  longestSec: number;
+  avgSec: number;
+  lookAways: number;
+  parts: {
+    part: FocusPart;
+    pct: number;
+    longestSec: number;
+    avgSec: number;
+    lookAways: number;
+    minutes: number;
+  }[];
+};
+
 /** Student-owned evidence of what works — not a diagnosis. */
 export type LearningPassport = {
   studentId: string;
@@ -145,6 +167,8 @@ export type LearningPassport = {
   formats: PassportFormatEvidence[];
   strategyTitles: string[];
   shares: PassportShare[];
+  /** Latest camera focus measurements, if the student had the camera on. */
+  focus?: FocusSummary | null;
 };
 
 export type Persona = {

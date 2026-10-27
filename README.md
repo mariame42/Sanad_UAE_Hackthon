@@ -23,6 +23,7 @@ make dev        # installs deps, creates .env.local, starts http://localhost:300
 | `make install` | `npm ci` (re-runs only when the lockfile changes) |
 | `make env` | Create `.env.local` from `.env.example` (`LLM_API_KEY` is optional) |
 | `make dev` | Dev server (`PORT=4000 make dev` to change the port) |
+| `make demo` | Dev server with the mock camera (no webcam / internet needed) |
 | `make build` / `make start` / `make prod` | Production build / serve it / both |
 | `make lint` / `make typecheck` | ESLint / TypeScript |
 | `make check` | Lint + typecheck + build — run before pushing |
@@ -48,7 +49,7 @@ Language toggle (EN/AR + RTL) and dark mode are in the header.
 Story: **diagnose the barrier, not the student** (see [`docs/IDEAS.md`](docs/IDEAS.md)).
 
 1. Faculty → Concern Desk → Language Guard → recommend Check-in to class  
-2. Student → Check-in (camera off) → Read aloud → strategies → Saved for me  
+2. Student → Check-in with camera focus tracking → Read aloud → strategies + focus → Saved for me  
 3. Student → Learning Passport → with vs without evidence → share ENG 101 (code)  
 4. Faculty → Passport → shared evidence → accept flexible adjustment in one click  
 5. Advisor → Cases → AI suggests, human decides · Privacy Lens  
@@ -64,6 +65,18 @@ Story: **diagnose the barrier, not the student** (see [`docs/IDEAS.md`](docs/IDE
   Student in another — changes appear live.
 - **Motion**: page transitions use React `<ViewTransition>` (Chromium/Safari;
   other browsers just swap pages). Everything respects `prefers-reduced-motion`.
+- **Camera focus tracking** (Check-in, on by default, one tap to turn off):
+  MediaPipe Face Landmarker runs in the browser — head pose + eye direction,
+  no calibration. Shows focus %, longest focus stretch and look-aways per part
+  (reading / video / questions); the lesson video pauses while the student
+  looks away. No video is recorded or sent; the numbers reach the Passport only
+  with “Saved for me” or above. The model and WASM load from
+  `storage.googleapis.com` / `cdn.jsdelivr.net`, so it needs internet.
+- **Mock camera for presentations**: set `NEXT_PUBLIC_FOCUS_CAMERA=mock` in
+  `.env.local` (or run `make demo`). The preview shows the demo student with a
+  drawn eye lock and a scripted, repeatable gaze (video holds focus best);
+  everything downstream — live numbers, video pause, results, Passport — is
+  the same code path. Restart the dev server / rebuild after changing it.
 - No `LLM_API_KEY`? Language Guard, route suggestion and handoff summary fall
   back to deterministic rules (`src/lib/language-guard.ts`), labelled
   “Offline rules” in the UI.

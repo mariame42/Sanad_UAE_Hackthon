@@ -107,6 +107,7 @@ export function ReadingStage({
           <div className="mx-auto aspect-[9/16] w-full max-w-sm overflow-hidden rounded-2xl bg-black">
             <video
               key={WATCH_VIDEO_SRC}
+              data-lesson-video
               className="h-full w-full object-contain"
               src={WATCH_VIDEO_SRC}
               width={720}

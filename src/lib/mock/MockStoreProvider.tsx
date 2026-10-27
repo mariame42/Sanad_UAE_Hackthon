@@ -28,6 +28,7 @@ import type {
   CheckInAttempt,
   Concern,
   ConsentChoice,
+  FocusSummary,
   HandoffEntry,
   LearningPassport,
   Role,
@@ -107,10 +108,12 @@ type MockStoreValue = {
     consent: ConsentChoice,
     strategies: string[],
     attempts?: CheckInAttempt[],
+    focus?: FocusSummary | null,
   ) => CaseRecord | null;
   updatePassportFromCheckIn: (
     attempts: CheckInAttempt[],
     strategies: string[],
+    focus?: FocusSummary | null,
   ) => LearningPassport;
   sharePassport: (course: string) => LearningPassport | null;
   revokePassportShare: (shareId: string) => void;
@@ -212,7 +215,11 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updatePassportFromCheckIn = useCallback(
-    (attempts: CheckInAttempt[], strategies: string[]) => {
+    (
+      attempts: CheckInAttempt[],
+      strategies: string[],
+      focus?: FocusSummary | null,
+    ) => {
       const evidence = buildPassportEvidence(attempts);
       const formats = buildPassportFormats(attempts);
       const passport: LearningPassport = {
@@ -226,6 +233,7 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
         formats,
         strategyTitles: strategies,
         shares: demoStore.get().passport?.shares ?? [],
+        focus: focus ?? demoStore.get().passport?.focus ?? null,
       };
       demoStore.set((s) => ({ ...s, passport }));
       return passport;
@@ -308,10 +316,11 @@ export function MockStoreProvider({ children }: { children: React.ReactNode }) {
       consent: ConsentChoice,
       strategies: string[],
       attempts: CheckInAttempt[] = [],
+      focus?: FocusSummary | null,
     ) => {
       if (consent === "private") return null;
       if (attempts.length) {
-        updatePassportFromCheckIn(attempts, strategies);
+        updatePassportFromCheckIn(attempts, strategies, focus);
       }
       if (consent === "saved") {
         demoStore.set((s) => ({

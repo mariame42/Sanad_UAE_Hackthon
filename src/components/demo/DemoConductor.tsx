@@ -24,7 +24,7 @@ const STEPS: Step[] = [
     role: "student",
     href: "/check-in",
     title: "Student takes the Check-in",
-    cue: "Camera off. Use Read aloud → strategies → Saved for me (opens Learning Passport) or Talk to a coach.",
+    cue: "Camera on: eyes tracked live, focus % and stretch update (one tap turns it off). Look away → video pauses. Results show focus per part → Saved for me (opens Passport).",
   },
   {
     role: "student",

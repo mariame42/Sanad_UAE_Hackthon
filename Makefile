@@ -6,7 +6,7 @@ SMOKE_PORT ?= 3123
 NODE_MIN   := 20.9.0
 
 .DEFAULT_GOAL := help
-.PHONY: help check-node install env dev build start prod lint typecheck check smoke all clean distclean
+.PHONY: help check-node install env dev demo build start prod lint typecheck check smoke all clean distclean
 
 help: ## Show this help
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  \033[36m%-11s\033[0m %s\n", $$1, $$2}'
@@ -26,6 +26,9 @@ env: ## Create .env.local from .env.example (LLM key is optional)
 
 dev: install env ## Run the dev server on PORT (default 3000)
 	$(NPM) run dev -- -p $(PORT)
+
+demo: install env ## Dev server with the mock camera (for presentations)
+	NEXT_PUBLIC_FOCUS_CAMERA=mock $(NPM) run dev -- -p $(PORT)
 
 build: install ## Production build
 	$(NPM) run build
