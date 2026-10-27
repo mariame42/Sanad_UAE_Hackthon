@@ -35,7 +35,7 @@ function binClass(pct: number) {
 export function BarrierMap() {
   const { locale } = useLocale();
   const ar = locale === "ar";
-  const { appliedFixes, applyFix, dashboard, sasWaitDays, passport } = useMockStore();
+  const { appliedFixes, applyFix, dashboard, sasWaitDays } = useMockStore();
   const [selected, setSelected] = useState<BarrierCell | null>(null);
 
   const sasDemand = dashboard.demand.find((d) => d.service === "SAS")?.requests ?? 1;
@@ -178,7 +178,6 @@ export function BarrierMap() {
             {ar ? "المصدر: " : "Source: "}
             {optedInContributors.toLocaleString(ar ? "ar-AE" : "en-GB")}
             {ar ? " طالباً اختاروا المساهمة دون كشف الهوية" : " students who opted in to anonymous contribution"}
-            {passport.contribute ? (ar ? " (+1 من هذا العرض)" : " (+1 from this demo)") : ""}
             {ar ? " · لا بيانات عن أفراد." : " · no individual data."}
           </p>
         </div>

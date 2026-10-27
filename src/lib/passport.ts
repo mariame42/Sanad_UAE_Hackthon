@@ -1,100 +1,91 @@
 import type {
-  AdjustmentKey,
-  Locale,
+  CheckInAttempt,
   PassportEvidence,
+  PassportFormatEvidence,
+  PassportToolKey,
 } from "@/lib/types";
 
-type Text = Record<Locale, string>;
-
-/** What the student tried, and the flexible adjustment it can justify. */
-export const ADJUSTMENTS: Record<AdjustmentKey, { tool: Text; ask: Text }> = {
-  tts: {
-    tool: { en: "Text-to-speech", ar: "تحويل النص إلى كلام" },
-    ask: {
-      en: "Readings as accessible text, so read-aloud works",
-      ar: "القراءات بنص قابل للوصول ليعمل القارئ الصوتي",
-    },
-  },
-  spacing: {
-    tool: { en: "Wider spacing", ar: "التباعد الأوسع" },
-    ask: {
-      en: "Materials in an editable format (I adjust the spacing)",
-      ar: "المواد بصيغة قابلة للتعديل (أضبط التباعد)",
-    },
-  },
-  dyslexiaFont: {
-    tool: { en: "Reading-friendly font", ar: "الخط المريح للقراءة" },
-    ask: {
-      en: "Materials in an editable format (I change the font)",
-      ar: "المواد بصيغة قابلة للتعديل (أغيّر الخط)",
-    },
-  },
-  chunking: {
-    tool: { en: "Chunking", ar: "تقسيم النص" },
-    ask: {
-      en: "Long tasks split into steps with a short summary",
-      ar: "تقسيم المهام الطويلة إلى خطوات مع ملخص قصير",
-    },
-  },
-  untimed: {
-    tool: { en: "No hard timer", ar: "دون مؤقت صارم" },
-    ask: {
-      en: "+25% time on timed quizzes",
-      ar: "وقت إضافي ‎+25٪ في الاختبارات المؤقتة",
-    },
-  },
+export const PASSPORT_TOOL_LABEL: Record<
+  PassportToolKey,
+  { en: string; ar: string }
+> = {
+  tts: { en: "Read aloud / text-to-speech", ar: "القراءة بصوت عالٍ" },
+  spacing: { en: "Wider spacing", ar: "التباعد الأوسع" },
+  dyslexiaFont: { en: "Dyslexia-friendly font", ar: "الخط المريح للقراءة" },
+  chunking: { en: "One chunk at a time", ar: "جزء واحد في كل مرة" },
 };
 
-export const ADJUSTMENT_KEYS = Object.keys(ADJUSTMENTS) as AdjustmentKey[];
+export const PASSPORT_COURSES = [
+  "ENG 101",
+  "BIO 210",
+  "MATH 105",
+  "UNI 100",
+] as const;
 
-/** Demo timetable for Layla. Dr. Sara Khan is the faculty persona. */
-export const COURSES = [
-  { course: "ENG 101", instructor: "Dr. Sara Khan" },
-  { course: "MATH 105", instructor: "Dr. Sara Khan" },
-  { course: "BIO 210", instructor: "Dr. Khalid Rahman" },
-];
-
-/** Smallest gain (in accuracy) we are willing to call “helps”. */
-const MIN_GAIN = 0.1;
-
-export function rate([correct, total]: [number, number]) {
-  return total ? correct / total : null;
+function accuracy(
+  list: CheckInAttempt[],
+): number | null {
+  const total = list.reduce((n, a) => n + a.total, 0);
+  return total ? list.reduce((n, a) => n + a.correct, 0) / total : null;
 }
 
-export type Verdict = "helps" | "no_difference" | "not_enough";
-
-export function verdict(e: PassportEvidence | undefined): Verdict {
-  if (!e) return "not_enough";
-  const w = rate(e.with);
-  const wo = rate(e.without);
-  if (w === null || wo === null || e.with[1] + e.without[1] < 3) return "not_enough";
-  return w - wo >= MIN_GAIN ? "helps" : "no_difference";
+function pct(n: number | null) {
+  return n === null ? null : Math.round(n * 100);
 }
 
-export function mergeEvidence(
-  a: Partial<Record<AdjustmentKey, PassportEvidence>>,
-  b: Partial<Record<AdjustmentKey, PassportEvidence>>,
-) {
-  const out = { ...a };
-  for (const key of ADJUSTMENT_KEYS) {
-    const add = b[key];
-    if (!add) continue;
-    const prev = out[key];
-    out[key] = prev
-      ? {
-          with: [prev.with[0] + add.with[0], prev.with[1] + add.with[1]],
-          without: [prev.without[0] + add.without[0], prev.without[1] + add.without[1]],
-        }
-      : add;
+/** Turn Check-in attempts into Passport evidence (with tool vs without). */
+export function buildPassportEvidence(
+  attempts: CheckInAttempt[],
+): PassportEvidence[] {
+  const keys: PassportToolKey[] = [
+    "tts",
+    "spacing",
+    "dyslexiaFont",
+    "chunking",
+  ];
+  const out: PassportEvidence[] = [];
+  for (const tool of keys) {
+    const on = attempts.filter((a) => a.tools[tool]);
+    if (!on.length) continue;
+    const off = attempts.filter((a) => !a.tools[tool]);
+    const withAcc = accuracy(on);
+    const withoutAcc = accuracy(off);
+    const withPct = pct(withAcc);
+    const withoutPct = pct(withoutAcc);
+    const deltaPct =
+      withPct !== null && withoutPct !== null ? withPct - withoutPct : null;
+    out.push({
+      tool,
+      labelEn: PASSPORT_TOOL_LABEL[tool].en,
+      labelAr: PASSPORT_TOOL_LABEL[tool].ar,
+      withPct,
+      withoutPct,
+      deltaPct,
+      trialsOn: on.length,
+      trialsOff: off.length,
+      helped: deltaPct !== null ? deltaPct > 0 : withPct !== null && withPct >= 50,
+    });
   }
   return out;
 }
 
-/** One line a teacher can read: evidence, never a diagnosis. */
-export function evidenceLine(e: PassportEvidence, locale: Locale) {
-  const pct = (n: number | null) => `${Math.round((n ?? 0) * 100)}%`;
-  const answers = e.with[1] + e.without[1];
-  return locale === "ar"
-    ? `${pct(rate(e.with))} معه مقابل ${pct(rate(e.without))} بدونه · ${answers} إجابات`
-    : `${pct(rate(e.with))} with it vs ${pct(rate(e.without))} without · ${answers} answers`;
+export function buildPassportFormats(
+  attempts: CheckInAttempt[],
+): PassportFormatEvidence[] {
+  const map: Record<"text" | "audio" | "video", (a: CheckInAttempt) => boolean> =
+    {
+      text: (a) => a.id === "read",
+      audio: (a) => a.tools.tts,
+      video: (a) => a.id === "watch",
+    };
+  return (["text", "audio", "video"] as const).map((format) => ({
+    format,
+    pct: pct(accuracy(attempts.filter(map[format]))),
+  }));
+}
+
+export function shareCode(studentId: string, course: string) {
+  const slug = course.replace(/\s+/g, "").toUpperCase();
+  const who = studentId.replace(/^stu-/, "").toUpperCase();
+  return `SANAD-${who}-${slug}`;
 }

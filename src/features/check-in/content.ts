@@ -1,11 +1,21 @@
 export type ActivityId =
   | "read"
-  | "listen"
   | "watch"
   | "timed"
   | "memory"
   | "visual_verbal"
   | "tool_trial";
+
+export type ModeId = "read" | "watch";
+
+export type Question = {
+  id: string;
+  promptEn: string;
+  promptAr: string;
+  optionsEn: string[];
+  optionsAr: string[];
+  correctIndex: number;
+};
 
 export type Activity = {
   id: ActivityId;
@@ -15,145 +25,189 @@ export type Activity = {
   bodyAr: string;
   transcriptEn?: string;
   transcriptAr?: string;
-  questions: {
-    id: string;
-    promptEn: string;
-    promptAr: string;
-    optionsEn: string[];
-    optionsAr: string[];
-    correctIndex: number;
-  }[];
+  questions: Question[];
 };
 
-export const PASSAGE_EN =
-  "Zayed University students often juggle lectures, labs, and group projects. When readings are long, some learners benefit from hearing the text, wider spacing, or breaking the page into smaller chunks. Support works best when it is offered early, with consent, and without labels.";
+/** Shared reading for the calm Check-in path — speaks to you, not about "learners". */
+export const PASSAGE_TITLE_EN = "Why a good night's sleep helps you remember";
+export const PASSAGE_TITLE_AR = "لماذا يساعدك نومٌ جيد على التذكّر";
 
-export const PASSAGE_AR =
-  "غالباً ما يوازن طلاب جامعة زايد بين المحاضرات والمختبرات والمشاريع الجماعية. عندما تكون القراءات طويلة، يستفيد بعض المتعلمين من سماع النص أو تباعد أوسع أو تقسيم الصفحة إلى أجزاء أصغر. الدعم أفضل عندما يُقدَّم مبكراً وبموافقة ودون تصنيفات.";
+export const PASSAGE_TOPIC_EN = "Sleep and memory";
+export const PASSAGE_TOPIC_AR = "النوم والذاكرة";
+
+export const PASSAGE_CHUNKS_EN = [
+  "After you study, your brain keeps working while you sleep. It sorts what you learned and stores the useful parts for later.",
+  "When you sleep seven to nine hours after studying, you usually recall more than when you stay up late to review.",
+  "A short rest before a test can help you feel clearer than another late-night cram session.",
+];
+
+export const PASSAGE_CHUNKS_AR = [
+  "بعد أن تدرس، يستمر دماغك في العمل أثناء نومك. يرتّب ما تعلّمته ويخزّن الأجزاء المفيدة لاحقاً.",
+  "عندما تنام سبع إلى تسع ساعات بعد الدراسة، تتذكر عادة أكثر مما لو سهرت للمراجعة.",
+  "راحة قصيرة قبل الاختبار قد تساعدك على التركيز أكثر من سهرٍ آخر للمذاكرة.",
+];
+
+/** Portrait (720x1280) clip shown in Watch mode. */
+export const WATCH_VIDEO_SRC = "/videos/How_Sleep_Sorts_Your_Memories.mp4";
+
+export const PASSAGE_EN = PASSAGE_CHUNKS_EN.join(" ");
+export const PASSAGE_AR = PASSAGE_CHUNKS_AR.join(" ");
+
+const sharedQuestions: Question[] = [
+  {
+    id: "r1",
+    promptEn: "What can help you remember what you studied?",
+    promptAr: "ما الذي يمكن أن يساعدك على تذكّر ما درست؟",
+    optionsEn: [
+      "Sleeping after you study",
+      "Skipping rest entirely",
+      "Only cramming all night",
+      "Avoiding sleep before a test",
+    ],
+    optionsAr: [
+      "النوم بعد الدراسة",
+      "تجنّب الراحة تماماً",
+      "السهر للمذاكرة فقط",
+      "تجنّب النوم قبل الاختبار",
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: "r2",
+    promptEn: "What helps your brain store new information?",
+    promptAr: "ما الذي يساعد دماغك على تخزين المعلومات الجديدة؟",
+    optionsEn: [
+      "Cramming all night",
+      "Sleeping after study",
+      "Skipping meals",
+      "Avoiding rest",
+    ],
+    optionsAr: [
+      "السهر للمذاكرة طوال الليل",
+      "النوم بعد الدراسة",
+      "تخطي الوجبات",
+      "تجنّب الراحة",
+    ],
+    correctIndex: 1,
+  },
+  {
+    id: "l1",
+    promptEn: "Compared with staying up late, sleeping after study usually helps you…",
+    promptAr: "مقارنةً بالسهر، النوم بعد الدراسة يساعدك عادة على…",
+    optionsEn: [
+      "Recall more",
+      "Forget faster",
+      "Need more labels",
+      "Skip consent",
+    ],
+    optionsAr: [
+      "التذكّر أكثر",
+      "النسيان أسرع",
+      "المزيد من التصنيفات",
+      "تخطي الموافقة",
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: "v1",
+    promptEn: "Before a test, what may help you feel clearer?",
+    promptAr: "قبل الاختبار، ما الذي قد يساعدك على الشعور بصفاء أكبر؟",
+    optionsEn: [
+      "A short rest",
+      "Another all-night cram",
+      "Skipping sleep",
+      "Studying without breaks",
+    ],
+    optionsAr: [
+      "راحة قصيرة",
+      "سهر آخر للمذاكرة",
+      "تخطي النوم",
+      "الدراسة دون فواصل",
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: "v2",
+    promptEn: "While you sleep, what does your brain do with what you studied?",
+    promptAr: "أثناء نومك، ماذا يفعل دماغك بما درست؟",
+    optionsEn: [
+      "It sorts and stores useful parts",
+      "It deletes everything you learned",
+      "It only works if you cram",
+      "It waits for a diagnosis label",
+    ],
+    optionsAr: [
+      "يرتّب ويخزّن الأجزاء المفيدة",
+      "يمحو كل ما تعلّمته",
+      "يعمل فقط إذا سهرت للمذاكرة",
+      "ينتظر تصنيفاً تشخيصياً",
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: "v3",
+    promptEn: "Sleep after study usually helps you…",
+    promptAr: "النوم بعد الدراسة يساعدك عادة على…",
+    optionsEn: [
+      "Recall more later",
+      "Need more labels",
+      "Skip rest forever",
+      "Avoid tools that fit you",
+    ],
+    optionsAr: [
+      "التذكّر أكثر لاحقاً",
+      "المزيد من التصنيفات",
+      "تجنّب الراحة إلى الأبد",
+      "تجنّب الأدوات التي تناسبك",
+    ],
+    correctIndex: 0,
+  },
+];
 
 export const activities: Activity[] = [
   {
     id: "read",
-    titleEn: "1. Read (text)",
-    titleAr: "1. قراءة (نص)",
+    titleEn: "Read",
+    titleAr: "قراءة",
     bodyEn: PASSAGE_EN,
     bodyAr: PASSAGE_AR,
-    questions: [
-      {
-        id: "r1",
-        promptEn: "What helps some learners with long readings?",
-        promptAr: "ما الذي يساعد بعض المتعلمين مع القراءات الطويلة؟",
-        optionsEn: [
-          "Hearing the text or chunking",
-          "Skipping consent",
-          "Public labels",
-          "Waiting for a crisis",
-        ],
-        optionsAr: [
-          "سماع النص أو التقسيم",
-          "تخطي الموافقة",
-          "تصنيفات علنية",
-          "انتظار الأزمة",
-        ],
-        correctIndex: 0,
-      },
-      {
-        id: "r2",
-        promptEn: "Support works best when it is…",
-        promptAr: "يعمل الدعم بشكل أفضل عندما يكون…",
-        optionsEn: [
-          "Early, with consent, without labels",
-          "Forced and anonymous",
-          "Diagnostic first",
-          "Faculty-only",
-        ],
-        optionsAr: [
-          "مبكراً وبموافقة ودون تصنيفات",
-          "قسرياً ومجهولاً",
-          "تشخيصياً أولاً",
-          "لأعضاء هيئة التدريس فقط",
-        ],
-        correctIndex: 0,
-      },
-    ],
-  },
-  {
-    id: "listen",
-    titleEn: "2. Listen (audio)",
-    titleAr: "2. استماع (صوت)",
-    bodyEn:
-      "Play the audio (or use Text-to-speech on the transcript), then answer. Same ideas as the reading.",
-    bodyAr:
-      "شغّل الصوت (أو استخدم تحويل النص إلى كلام للنص المكتوب) ثم أجب. نفس أفكار القراءة.",
-    transcriptEn: PASSAGE_EN,
-    transcriptAr: PASSAGE_AR,
-    questions: [
-      {
-        id: "l1",
-        promptEn: "According to the passage, labels should be…",
-        promptAr: "وفقاً للنص، يجب أن تكون التصنيفات…",
-        optionsEn: ["Avoided", "Required", "Public", "Automatic"],
-        optionsAr: ["متجنَّبة", "مطلوبة", "علنية", "تلقائية"],
-        correctIndex: 0,
-      },
-    ],
+    questions: [sharedQuestions[0], sharedQuestions[1], sharedQuestions[2]],
   },
   {
     id: "watch",
-    titleEn: "3. Watch (video)",
-    titleAr: "3. مشاهدة (فيديو)",
-    bodyEn:
-      "Watch the short campus clip (or read captions). Focus on the message: different needs, same goals.",
-    bodyAr:
-      "شاهد مقطع الحرم القصير (أو اقرأ الترجمة). الرسالة: احتياجات مختلفة، أهداف واحدة.",
+    titleEn: "Watch",
+    titleAr: "مشاهدة",
+    bodyEn: PASSAGE_EN,
+    bodyAr: PASSAGE_AR,
     transcriptEn:
-      "Different needs. Same goals. Early help without labels keeps support dignified for every student.",
+      "Different needs. Same goals. Sleep, rest, and tools that fit you keep learning dignified — without labels.",
     transcriptAr:
-      "احتياجات مختلفة. أهداف واحدة. المساعدة المبكرة بلا تصنيفات تحفظ كرامة الدعم لكل طالب.",
-    questions: [
-      {
-        id: "v1",
-        promptEn: "The campus message emphasizes…",
-        promptAr: "تؤكد رسالة الحرم على…",
-        optionsEn: [
-          "Different needs, same goals",
-          "One learning style",
-          "Diagnosis first",
-          "Surveillance",
-        ],
-        optionsAr: [
-          "احتياجات مختلفة وأهداف واحدة",
-          "أسلوب تعلّم واحد",
-          "التشخيص أولاً",
-          "المراقبة",
-        ],
-        correctIndex: 0,
-      },
-    ],
+      "احتياجات مختلفة. أهداف واحدة. النوم والراحة والأدوات التي تناسبك تحفظ كرامة التعلّم — بلا تصنيفات.",
+    questions: [sharedQuestions[3], sharedQuestions[4], sharedQuestions[5]],
   },
   {
     id: "timed",
-    titleEn: "4. Timed word list",
-    titleAr: "4. قائمة كلمات بوقت",
+    titleEn: "Timed word list",
+    titleAr: "قائمة كلمات بوقت",
     bodyEn:
-      "You have ~45 seconds. Mark which words appeared in the passage: consent, lecture, diagnosis, chunking, crisis.",
+      "You have ~45 seconds. Mark which words appeared in the passage: sleep, recall, cram, diagnosis, rest.",
     bodyAr:
-      "لديك نحو 45 ثانية. حدّد الكلمات التي ظهرت في النص: موافقة، محاضرة، تشخيص، تقسيم، أزمة.",
+      "لديك نحو 45 ثانية. حدّد الكلمات التي ظهرت في النص: نوم، تذكّر، مذاكرة مكثفة، تشخيص، راحة.",
     questions: [
       {
         id: "t1",
-        promptEn: "Which word was NOT in the supportive message?",
-        promptAr: "أي كلمة لم تكن في رسالة الدعم؟",
-        optionsEn: ["Diagnosis as a requirement", "Consent", "Chunking", "Lecture"],
-        optionsAr: ["التشخيص كمتطلب", "موافقة", "تقسيم", "محاضرة"],
+        promptEn: "Which word was NOT in the supportive message for you?",
+        promptAr: "أي كلمة لم تكن في رسالة الدعم الموجّهة لك؟",
+        optionsEn: ["Diagnosis as a requirement", "Sleep", "Recall", "Rest"],
+        optionsAr: ["التشخيص كمتطلب", "نوم", "تذكّر", "راحة"],
         correctIndex: 0,
       },
     ],
   },
   {
     id: "memory",
-    titleEn: "5. Working-memory span",
-    titleAr: "5. مدى الذاكرة العاملة",
+    titleEn: "Working-memory span",
+    titleAr: "مدى الذاكرة العاملة",
     bodyEn: "Remember this sequence, then choose it: 7 — Blue — Gate — 2",
     bodyAr: "احفظ التسلسل ثم اختره: 7 — أزرق — بوابة — 2",
     questions: [
@@ -179,12 +233,12 @@ export const activities: Activity[] = [
   },
   {
     id: "visual_verbal",
-    titleEn: "6. Visual vs verbal instructions",
-    titleAr: "6. تعليمات بصرية مقابل لفظية",
+    titleEn: "Visual vs verbal instructions",
+    titleAr: "تعليمات بصرية مقابل لفظية",
     bodyEn:
-      "Verbal: Circle the campus service that owns L3 screening. Visual: [Student] → [Coach L2] → [SAS L3].",
+      "Verbal: Circle the campus service that owns L3 screening. Visual: [You] → [Coach L2] → [SAS L3].",
     bodyAr:
-      "لفظي: ضع دائرة حول الخدمة التي تملك إحالة L3. بصري: [طالب] ← [مدرب L2] ← [خدمات الإتاحة L3].",
+      "لفظي: ضع دائرة حول الخدمة التي تملك إحالة L3. بصري: [أنت] ← [مدرب L2] ← [خدمات الإتاحة L3].",
     questions: [
       {
         id: "vv1",
@@ -203,17 +257,15 @@ export const activities: Activity[] = [
   },
   {
     id: "tool_trial",
-    titleEn: "7. Tool trial",
-    titleAr: "7. تجربة الأدوات",
-    bodyEn:
-      "Turn on text-to-speech, wider spacing, dyslexia-friendly font, or chunking, then re-read a short line and answer.",
-    bodyAr:
-      "فعّل تحويل النص إلى كلام أو التباعد أو الخط المريح أو التقسيم، ثم أعد قراءة سطر قصير وأجب.",
+    titleEn: "Tool trial",
+    titleAr: "تجربة الأدوات",
+    bodyEn: PASSAGE_EN,
+    bodyAr: PASSAGE_AR,
     questions: [
       {
         id: "tt1",
-        promptEn: "Which statement matches Sanad?",
-        promptAr: "أي عبارة تطابق سند؟",
+        promptEn: "Which statement matches how Sanad supports you?",
+        promptAr: "أي عبارة تطابق كيف يدعمك سند؟",
         optionsEn: [
           "Tools are strategies, not labels",
           "Tools diagnose disability",
@@ -232,5 +284,42 @@ export const activities: Activity[] = [
   },
 ];
 
-export const QUICK_IDS: ActivityId[] = ["read", "listen", "watch", "tool_trial"];
-export const FULL_IDS: ActivityId[] = activities.map((a) => a.id);
+export const QUICK_IDS: ActivityId[] = ["read", "watch"];
+export const FULL_IDS: ActivityId[] = [
+  "read",
+  "watch",
+  "timed",
+  "memory",
+  "visual_verbal",
+  "tool_trial",
+];
+
+export const JOURNEY_STEPS: {
+  id: ModeId | "tools";
+  labelEn: string;
+  labelAr: string;
+  hintEn: string;
+  hintAr: string;
+}[] = [
+  {
+    id: "read",
+    labelEn: "Read",
+    labelAr: "قراءة",
+    hintEn: "About 3 minutes",
+    hintAr: "نحو 3 دقائق",
+  },
+  {
+    id: "watch",
+    labelEn: "Watch",
+    labelAr: "مشاهدة",
+    hintEn: "About 3 minutes",
+    hintAr: "نحو 3 دقائق",
+  },
+  {
+    id: "tools",
+    labelEn: "Your tools",
+    labelAr: "أدواتك",
+    hintEn: "See what helped",
+    hintAr: "انظر ما ساعدك",
+  },
+];

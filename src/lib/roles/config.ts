@@ -48,7 +48,7 @@ export function navForRole(role: Role): { href: string; key: string }[] {
     case "faculty":
       return [
         { href: "/concern", key: "concern" },
-        { href: "/adjustments", key: "adjustments" },
+        { href: "/passport", key: "passport" },
         { href: "/barriers", key: "barriers" },
         { href: "/principles", key: "principles" },
       ];

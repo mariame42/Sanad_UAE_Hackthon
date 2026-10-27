@@ -25,7 +25,7 @@ check() { # check <expected-status> <path>
 }
 
 echo "Pages"
-for path in / /role /check-in /passport /my-case /concern /adjustments \
+for path in / /role /check-in /passport /my-case /concern \
             /cases /cases/case-1001 /dashboard /barriers /principles; do
   check 200 "$path"
 done

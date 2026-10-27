@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Noto_Naskh_Arabic, Plus_Jakarta_Sans } from "next/font/google";
+import { Literata, Noto_Naskh_Arabic, Plus_Jakarta_Sans } from "next/font/google";
 import { AppProviders } from "@/components/providers/AppProviders";
 import "./globals.css";
 
 const body = Plus_Jakarta_Sans({
   variable: "--font-body",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const reading = Literata({
+  variable: "--font-reading",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -38,13 +44,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${body.variable} ${arabic.variable} h-full antialiased`}
+      className={`${body.variable} ${reading.variable} ${arabic.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="flex min-h-full flex-col bg-[#F9FBFC] font-[family-name:var(--font-body)] text-[#0F3D3E] dark:bg-[#0B1615] dark:text-[#E8F0EF]">
+      <body className="flex min-h-full flex-col bg-[#F4F6F9] font-[family-name:var(--font-body)] text-[#1B2A4A] dark:bg-[#0C1220] dark:text-[#E8ECF8]">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

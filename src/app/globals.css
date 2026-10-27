@@ -4,17 +4,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f9fbfc;
-  --foreground: #0f3d3e;
-  --sanad-teal: #1f7a7a;
-  --sanad-deep: #0f3d3e;
+  --background: #f4f6f9;
+  --foreground: #1b2a4a;
+  --sanad-teal: #2f9e95;
+  --sanad-deep: #1b2a4a;
+  --sanad-indigo: #1b2a4a;
+  --sanad-sea: #2f9e95;
+  --sanad-sea-soft: #e6f5f3;
+  --sanad-gold: #c9a227;
 }
 
 .dark {
-  --background: #0b1615;
-  --foreground: #e8f0ef;
+  --background: #0c1220;
+  --foreground: #e8ecf8;
   --sanad-teal: #4db3b0;
-  --sanad-deep: #e8f0ef;
+  --sanad-deep: #e8ecf8;
+  --sanad-indigo: #c5d0f0;
+  --sanad-sea: #4db3b0;
+  --sanad-sea-soft: #143029;
+  --sanad-gold: #d4b84a;
 }
 
 @theme inline {
@@ -43,8 +51,40 @@ html[lang="ar"] body {
   word-spacing: 0.12em;
 }
 
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/opendyslexic/OpenDyslexic-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 .sanad-dyslexia {
-  font-family: "Comic Sans MS", "OpenDyslexic", var(--font-body), sans-serif;
+  font-family: "OpenDyslexic", var(--font-body), sans-serif;
   letter-spacing: 0.05em;
   line-height: 1.7;
 }
@@ -53,6 +93,18 @@ html[lang="ar"] body {
   margin-top: 1.25rem;
   padding-top: 1rem;
   border-top: 1px dashed #cbd5e1;
+}
+
+.sanad-checkin-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(47, 158, 149, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(201, 162, 39, 0.07), transparent),
+    var(--background);
+}
+
+.sanad-chunk-active {
+  background: linear-gradient(90deg, rgba(201, 162, 39, 0.22), rgba(201, 162, 39, 0.06));
+  border-inline-start: 4px solid var(--sanad-gold);
 }
 
 @keyframes welcome-fade-up {

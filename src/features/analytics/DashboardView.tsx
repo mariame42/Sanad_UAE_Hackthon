@@ -21,7 +21,7 @@ const AXIS = { fontSize: 12, fill: "#64748b" };
 
 export function DashboardView() {
   const { t, locale } = useLocale();
-  const { dashboard, pilotTargets, cases, shares, appliedFixes } = useMockStore();
+  const { dashboard, pilotTargets, cases, passport, appliedFixes } = useMockStore();
   const ar = locale === "ar";
   const [equityAsTable, setEquityAsTable] = useState(false);
 
@@ -35,7 +35,7 @@ export function DashboardView() {
     shared: cases.filter((c) => c.handoffSummary?.status === "approved").length,
     disputes: cases.filter((c) => c.handoffs.some((h) => h.to === "Recourse")).length,
     views: cases.reduce((n, c) => n + (c.audit?.length ?? 0), 0),
-    adjustments: shares.filter((s) => s.status === "accepted").length,
+    adjustments: passport?.shares.filter((s) => s.response === "accepted" && !s.revokedAt).length ?? 0,
     fixes: appliedFixes.length,
   };
 

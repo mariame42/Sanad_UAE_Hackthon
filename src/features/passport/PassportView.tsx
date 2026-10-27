@@ -1,313 +1,533 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Time } from "@/components/ui/Time";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { useMockStore } from "@/lib/mock/MockStoreProvider";
-import {
-  ADJUSTMENT_KEYS,
-  ADJUSTMENTS,
-  COURSES,
-  evidenceLine,
-  rate,
-  verdict,
-  type Verdict,
-} from "@/lib/passport";
-import type { AdjustmentKey, Locale, PassportShare } from "@/lib/types";
-
-const VERDICT: Record<Verdict, { en: string; ar: string; cls: string }> = {
-  helps: {
-    en: "Helps you",
-    ar: "يساعدك",
-    cls: "bg-[#E8F4F3] text-[#0F3D3E] dark:bg-[#1A3D3A] dark:text-[#E8F0EF]",
-  },
-  no_difference: {
-    en: "No clear difference",
-    ar: "لا فرق واضح",
-    cls: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-  },
-  not_enough: {
-    en: "Need more tries",
-    ar: "يحتاج محاولات أكثر",
-    cls: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-  },
-};
-
-export const SHARE_STATUS: Record<PassportShare["status"], { en: string; ar: string }> = {
-  pending: { en: "⏳ Waiting for the instructor", ar: "⏳ بانتظار المدرّس" },
-  accepted: { en: "✓ Adjustment accepted", ar: "✓ تمت الموافقة على التعديل" },
-  discuss: {
-    en: "💬 The instructor would like a short chat first",
-    ar: "💬 يودّ المدرّس حديثاً قصيراً أولاً",
-  },
-  revoked: { en: "Withdrawn by you", ar: "سحبتَه أنت" },
-};
+import { PASSPORT_COURSES } from "@/lib/passport";
+import { STUDENT_PROFILE } from "@/lib/student-profile";
+import { useRole } from "@/lib/roles/RoleProvider";
 
 export function PassportView() {
-  const { locale } = useLocale();
+  const { t, locale } = useLocale();
   const ar = locale === "ar";
-  const { passport, shares, sharePassport, revokeShare, setContribute } = useMockStore();
+  const { role } = useRole();
+  const { passport, sharePassport, revokePassportShare, clearPassport } =
+    useMockStore();
+  const [course, setCourse] = useState<string>(PASSPORT_COURSES[0]);
+  const [custom, setCustom] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const keys = ADJUSTMENT_KEYS.filter((k) => passport.evidence[k]);
-  const helping = keys.filter((k) => verdict(passport.evidence[k]) === "helps");
+  const activeShares = useMemo(
+    () => passport?.shares.filter((s) => !s.revokedAt) ?? [],
+    [passport],
+  );
 
-  const [course, setCourse] = useState(COURSES[0].course);
-  const [picked, setPicked] = useState<AdjustmentKey[] | null>(null);
-  const chosen = (picked ?? helping).filter((k) => helping.includes(k));
-  const instructor = COURSES.find((c) => c.course === course)!.instructor;
+  if (role === "faculty") {
+    return <FacultyPassportInbox ar={ar} />;
+  }
+
+  if (!passport || passport.evidence.length === 0) {
+    return (
+      <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
+        <h1 className="text-3xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+          {t.passport.title}
+        </h1>
+        <p className="mt-2 text-slate-600 dark:text-slate-300">
+          {t.passport.empty}
+        </p>
+        <Link
+          href="/check-in"
+          className="mt-6 inline-block text-sm font-semibold text-[var(--sanad-sea)]"
+        >
+          {t.checkIn.title} →
+        </Link>
+      </div>
+    );
+  }
+
+  function share() {
+    const name = custom.trim() || course;
+    sharePassport(name);
+    setCustom("");
+  }
+
+  async function copyCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(code);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      setCopied(null);
+    }
+  }
+
+  const displayName = ar ? STUDENT_PROFILE.nameAr : passport.studentName;
+
+  return (
+    <div className="sanad-checkin-bg min-h-[calc(100vh-5rem)] px-4 py-8 sm:px-6">
+      <div className="mx-auto w-[min(100%,92%)]">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[var(--sanad-sea)]">
+              {t.passport.eyebrow}
+            </p>
+            <h1 className="text-2xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8] sm:text-3xl">
+              {t.passport.title}
+            </h1>
+            <p className="mt-1 max-w-xl text-sm text-slate-600 dark:text-slate-300">
+              {t.passport.subtitle}
+            </p>
+          </div>
+          <Button type="button" variant="secondary" onClick={() => clearPassport()}>
+            {t.passport.clear}
+          </Button>
+        </div>
+
+        {/* Open passport book — two facing pages */}
+        <div className="passport-book relative mx-auto max-w-5xl">
+          <div
+            className="pointer-events-none absolute -inset-x-2 top-4 bottom-0 z-0 rounded-[1.25rem] bg-black/20 blur-xl sm:-inset-x-4"
+            aria-hidden
+          />
+          {/* Leather cover rim */}
+          <div className="relative z-10 overflow-hidden rounded-[1.1rem] bg-gradient-to-br from-[#3d1f2b] via-[#2a1520] to-[#1a0f14] p-[0.55rem] shadow-[0_28px_70px_rgba(26,15,20,0.45)]">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-30"
+              style={{
+                backgroundImage:
+                  "radial-gradient(ellipse at 20% 10%,rgba(201,162,39,0.25),transparent 45%),radial-gradient(ellipse at 80% 90%,rgba(201,162,39,0.12),transparent 40%)",
+              }}
+              aria-hidden
+            />
+            <div className="relative grid overflow-hidden rounded-[0.65rem] bg-[#efe6d6] md:grid-cols-2 dark:bg-[#2a2430]">
+              {/* Spine gutter */}
+              <div
+                className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-6 -translate-x-1/2 md:block"
+                aria-hidden
+              >
+                <div className="h-full w-full bg-gradient-to-r from-[#1a0f14]/35 via-[#c9a227]/35 to-[#1a0f14]/25" />
+                <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[#1a0f14]/40" />
+              </div>
+
+              {/* LEFT PAGE — identity */}
+              <section className="relative border-b border-[#1b2a4a]/10 px-5 py-6 text-[#1b2a4a] sm:px-7 sm:py-8 md:border-b-0 md:border-e dark:border-white/10 dark:text-[#E8ECF8]">
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[0.06]"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg,#1b2a4a 0,#1b2a4a 1px,transparent 1px,transparent 14px)",
+                  }}
+                  aria-hidden
+                />
+                <div className="relative flex h-full flex-col">
+                  <div className="flex items-start justify-between gap-3 border-b border-[#8a6d1f]/35 pb-4">
+                    <div>
+                      <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-[#8a6d1f]">
+                        {ar ? "سند · جامعة زايد" : "Sanad · Zayed University"}
+                      </p>
+                      <p className="mt-1 font-[family-name:var(--font-reading)] text-xl font-semibold">
+                        {ar ? "جواز التعلّم" : "Learning Passport"}
+                      </p>
+                    </div>
+                    <span className="rounded border border-[#8a6d1f]/50 px-2 py-1 text-[0.6rem] font-bold uppercase tracking-wide text-[#8a6d1f]">
+                      {ar ? "ليس تشخيصاً" : "Not a diagnosis"}
+                    </span>
+                  </div>
+
+                  <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <div className="mx-auto shrink-0 sm:mx-0">
+                      <div className="relative h-40 w-32 overflow-hidden rounded-sm border-[3px] border-[#8a6d1f]/55 bg-white shadow-[inset_0_0_0_1px_rgba(27,42,74,0.12)]">
+                        <Image
+                          src={STUDENT_PROFILE.photoSrc}
+                          alt={displayName}
+                          fill
+                          className="object-cover object-top"
+                          sizes="128px"
+                          priority
+                        />
+                      </div>
+                      <p className="mt-2 text-center text-[0.6rem] font-semibold uppercase tracking-wider text-[#8a6d1f]">
+                        {ar ? "صورة الطالبة" : "Student photo"}
+                      </p>
+                    </div>
+
+                    <dl className="min-w-0 flex-1 space-y-3 text-sm">
+                      <div>
+                        <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6d1f]/90">
+                          {ar ? "الاسم" : "Name"}
+                        </dt>
+                        <dd className="font-[family-name:var(--font-reading)] text-lg font-semibold leading-snug">
+                          {displayName}
+                        </dd>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6d1f]/90">
+                            {ar ? "الرقم" : "ID"}
+                          </dt>
+                          <dd className="font-mono text-sm">{STUDENT_PROFILE.id}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6d1f]/90">
+                            {ar ? "البرنامج" : "Program"}
+                          </dt>
+                          <dd>
+                            {ar
+                              ? STUDENT_PROFILE.programAr
+                              : STUDENT_PROFILE.programEn}
+                          </dd>
+                        </div>
+                      </div>
+                      <div>
+                        <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6d1f]/90">
+                          {ar ? "الجامعة" : "University"}
+                        </dt>
+                        <dd>
+                          {ar
+                            ? STUDENT_PROFILE.universityAr
+                            : STUDENT_PROFILE.universityEn}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6d1f]/90">
+                          {t.passport.updated}
+                        </dt>
+                        <dd>
+                          <Time iso={passport.updatedAt} locale={locale} />
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <p className="mt-auto border-t border-[#8a6d1f]/25 pt-4 text-xs leading-relaxed text-[#1b2a4a]/75 dark:text-[#E8ECF8]/75">
+                    {t.passport.guardrail}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[#8a6d1f]">
+                      {ar ? "ملك الطالبة · قابل للإلغاء" : "Student-owned · Revocable"}
+                    </p>
+                    <span className="font-mono text-[0.65rem] text-[#8a6d1f]/80">
+                      {ar ? "ص ١" : "p. 1"}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              {/* RIGHT PAGE — evidence */}
+              <section className="relative bg-[#faf6ee] px-5 py-6 text-[#1b2a4a] sm:px-7 sm:py-8 dark:bg-[#1f1a28] dark:text-[#E8ECF8]">
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[0.05]"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(90deg,#1b2a4a 0,#1b2a4a 1px,transparent 1px,transparent 16px)",
+                  }}
+                  aria-hidden
+                />
+                <div className="relative flex h-full flex-col">
+                  <h2 className="font-[family-name:var(--font-reading)] text-xl font-semibold">
+                    {t.passport.evidenceTitle}
+                  </h2>
+                  <p className="mt-1 text-xs text-[#1b2a4a]/60 dark:text-[#E8ECF8]/60">
+                    {ar
+                      ? "مع الأداة مقابل بدونها — دليل، لا تصنيف."
+                      : "With tool vs without — evidence, not a label."}
+                  </p>
+
+                  <ul className="mt-5 space-y-3">
+                    {passport.evidence.map((e) => {
+                      const label = ar ? e.labelAr : e.labelEn;
+                      const delta =
+                        e.deltaPct === null
+                          ? null
+                          : e.deltaPct > 0
+                            ? `+${e.deltaPct}%`
+                            : `${e.deltaPct}%`;
+                      return (
+                        <li
+                          key={e.tool}
+                          className="rounded-md border border-[#1b2a4a]/10 bg-white/80 px-3.5 py-3 dark:border-white/10 dark:bg-white/5"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-semibold">{label}</p>
+                            {delta ? (
+                              <span className="shrink-0 rounded bg-[#e6f5f3] px-2 py-0.5 text-xs font-bold text-[#2f9e95] dark:bg-[#2f9e95]/20">
+                                {delta}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 text-xs text-[#1b2a4a]/65 dark:text-[#E8ECF8]/65">
+                            {ar
+                              ? `مع ${e.withPct ?? "—"}٪ · بدون ${e.withoutPct ?? "—"}٪ · ${e.trialsOn}+${e.trialsOff} تجارب`
+                              : `With ${e.withPct ?? "—"}% · Without ${e.withoutPct ?? "—"}% · ${e.trialsOn}+${e.trialsOff} trials`}
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-[#8a6d1f]">
+                    {t.passport.formatsTitle}
+                  </h3>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {passport.formats.map((f) => (
+                      <div
+                        key={f.format}
+                        className="rounded-md border border-[#1b2a4a]/10 bg-white/80 px-2 py-2 text-center dark:border-white/10 dark:bg-white/5"
+                      >
+                        <p className="text-[0.6rem] font-bold uppercase tracking-wide text-[#8a6d1f]">
+                          {
+                            {
+                              text: ar ? "نص" : "Text",
+                              audio: ar ? "صوت" : "Audio",
+                              video: ar ? "فيديو" : "Video",
+                            }[f.format]
+                          }
+                        </p>
+                        <p className="mt-0.5 text-lg font-bold tabular-nums">
+                          {f.pct === null ? "—" : `${f.pct}%`}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto flex items-end justify-between gap-3 border-t border-[#8a6d1f]/25 pt-4">
+                    <div>
+                      <p className="text-[0.65rem] font-bold uppercase tracking-wider text-[#8a6d1f]">
+                        {t.passport.qrTitle}
+                      </p>
+                      <p className="mt-1 max-w-[10rem] font-mono text-[0.65rem] text-[#1b2a4a]/55 dark:text-[#E8ECF8]/55">
+                        {activeShares[0]?.code ??
+                          (ar
+                            ? "شارك مقرراً لإصدار الرمز"
+                            : "Share a course for a code")}
+                      </p>
+                      <p className="mt-3 font-mono text-[0.65rem] text-[#8a6d1f]/80">
+                        {ar ? "ص ٢" : "p. 2"}
+                      </p>
+                    </div>
+                    <div
+                      className="grid h-16 w-16 grid-cols-5 grid-rows-5 gap-0.5 rounded-sm bg-[#1b2a4a] p-1.5"
+                      aria-hidden
+                    >
+                      {Array.from({ length: 25 }, (_, i) => (
+                        <span
+                          key={i}
+                          className={`rounded-[1px] ${
+                            [
+                              0, 1, 2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 21,
+                              22, 24,
+                            ].includes(i)
+                              ? "bg-[#f7f1e6]"
+                              : "bg-transparent"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        {/* Share controls under the book */}
+        <section className="mx-auto mt-8 max-w-5xl rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="text-lg font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+            {t.passport.shareTitle}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            {t.passport.shareHint}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {PASSPORT_COURSES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCourse(c)}
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                  course === c && !custom
+                    ? "bg-[var(--sanad-indigo)] text-white"
+                    : "border border-slate-200 text-slate-600 dark:border-slate-600 dark:text-slate-300"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="block min-w-0 flex-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+              {t.passport.customCourse}
+              <input
+                value={custom}
+                onChange={(e) => setCustom(e.target.value)}
+                placeholder={ar ? "مثال: CHEM 201" : "e.g. CHEM 201"}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+              />
+            </label>
+            <Button
+              type="button"
+              className="!bg-[var(--sanad-indigo)] sm:mb-0.5"
+              onClick={share}
+            >
+              {t.passport.shareAction}
+            </Button>
+          </div>
+
+          <ul className="mt-5 space-y-2">
+            {passport.shares.length === 0 ? (
+              <li className="text-sm text-slate-400">{t.passport.noShares}</li>
+            ) : (
+              passport.shares.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 px-4 py-3 dark:border-slate-800"
+                >
+                  <div>
+                    <p className="font-semibold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+                      {s.course}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {s.revokedAt ? t.passport.revoked : t.passport.active} ·{" "}
+                      <Time iso={s.sharedAt} locale={locale} />
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-slate-500">{s.code}</p>
+                    {s.response && !s.revokedAt ? (
+                      <p className="pop mt-1 text-xs font-semibold text-[var(--sanad-sea)]">
+                        {s.response === "accepted"
+                          ? ar
+                            ? "✓ قبل المدرّس التعديل"
+                            : "✓ Instructor accepted the adjustment"
+                          : ar
+                            ? "💬 المدرّس يريد التحدث أولاً"
+                            : "💬 Instructor would like to talk first"}
+                      </p>
+                    ) : null}
+                  </div>
+                  {!s.revokedAt ? (
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => copyCode(s.code)}
+                      >
+                        {copied === s.code ? t.passport.copied : t.passport.copy}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => revokePassportShare(s.id)}
+                      >
+                        {t.passport.revoke}
+                      </Button>
+                    </div>
+                  ) : null}
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function FacultyPassportInbox({ ar }: { ar: boolean }) {
+  const { passport, respondShare } = useMockStore();
+  const active = passport?.shares.filter((s) => !s.revokedAt) ?? [];
 
   return (
     <div className="stagger mx-auto max-w-3xl px-5 py-10 sm:px-8">
-      <h1 className="text-3xl font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
-        {ar ? "جواز التعلّم" : "My Learning Passport"}
+      <h1 className="text-3xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+        {ar ? "جوازات مشاركة الطلاب" : "Shared Learning Passports"}
       </h1>
       <p className="mt-2 text-slate-600 dark:text-slate-300">
         {ar
-          ? "دليل على ما ينجح معك — وليس تشخيصاً لما هو «خطأ». ملكك أنت، وتشاركه مقرراً تلو الآخر."
-          : "Evidence of what works for you — not proof of what’s “wrong”. You own it and share it one course at a time."}
+          ? "الطالب يشارك معك دليلاً على ما يساعده — ليس تشخيصاً. يمكنك قبول تعديلات مرنة فوراً."
+          : "A student shared evidence of what helps them — not a diagnosis. You can agree flexible adjustments immediately."}
       </p>
 
-      <section
-        aria-label={ar ? "بطاقة الجواز" : "Passport card"}
-        className="lens-in relative mt-8 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F3D3E] via-[#1F5F5F] to-[#1F7A7A] p-6 text-white shadow-xl"
-      >
-        <div aria-hidden className="absolute -end-16 -top-16 h-56 w-56 rounded-full border-[18px] border-white/5" />
-        <div aria-hidden className="absolute -bottom-20 -start-10 h-48 w-48 rounded-full bg-white/5" />
-        <div className="relative flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#9FD9D6]">
-              {ar ? "سند · جواز التعلّم" : "Sanad · Learning Passport"}
-            </p>
-            <p className="mt-2 text-2xl font-bold">{ar ? "ليلى المنصوري" : "Layla Al Mansoori"}</p>
-            <p className="mt-1 text-xs text-white/70">
-              {ar ? `${passport.sessions} جلسات تسجيل · آخر تحديث ` : `${passport.sessions} Check-in sessions · updated `}
-              <Time iso={passport.updatedAt} locale={locale} />
-            </p>
-          </div>
-          <span className="rounded-full border border-white/30 px-3 py-1 text-xs font-semibold">
-            🚫 {ar ? "لا تشخيص بداخله" : "No diagnosis inside"}
-          </span>
-        </div>
-
-        <ul className="stagger relative mt-6 space-y-4">
-          {keys.map((k) => {
-            const e = passport.evidence[k]!;
-            const v = verdict(e);
-            return (
-              <li key={k} className="rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-semibold">{ADJUSTMENTS[k].tool[locale]}</p>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${VERDICT[v].cls}`}>
-                    {VERDICT[v][locale]}
-                  </span>
-                </div>
-                <Bar label={ar ? "معه" : "With"} value={rate(e.with)} strong />
-                <Bar label={ar ? "بدونه" : "Without"} value={rate(e.without)} />
-                <p className="mt-2 text-xs text-white/60">{evidenceLine(e, locale)}</p>
-              </li>
-            );
-          })}
-        </ul>
-        {!keys.length ? (
-          <p className="relative mt-6 text-sm text-white/80">
-            {ar ? "لا نتائج بعد. جرّب أداة في تسجيل التعلّم." : "No results yet. Try a tool in the Check-in."}
-          </p>
-        ) : null}
-      </section>
-
-      <section className="mt-8 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-5 dark:border-white/10 dark:bg-slate-900/70">
-        <h2 className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
-          {ar ? "شاركه مع مدرّس" : "Share with an instructor"}
-        </h2>
-        <p className="mt-1 text-sm text-slate-500">
+      {active.length === 0 || !passport ? (
+        <p className="mt-8 text-sm text-slate-500">
           {ar
-            ? "للتعديلات المرنة البسيطة فقط. التسهيلات الرسمية تمر عبر خدمات الإتاحة."
-            : "For light, flexible adjustments. Formal accommodations still go through SAS."}
+            ? "لا توجد مشاركات نشطة بعد. اطلب من الطالب مشاركة جوازه لمقرر ما."
+            : "No active shares yet. Ask the student to share their Passport for a course."}
         </p>
-
-        <label className="mt-4 block text-sm font-bold">
-          {ar ? "المقرر" : "Course"}
-          <select
-            value={course}
-            onChange={(e) => setCourse(e.target.value)}
-            className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm dark:border-white/10 dark:bg-slate-900/70"
-          >
-            {COURSES.map((c) => (
-              <option key={c.course} value={c.course}>
-                {c.course} · {c.instructor}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <fieldset className="mt-4">
-          <legend className="text-sm font-bold">{ar ? "ما أطلبه" : "What I’m asking for"}</legend>
-          <div className="mt-2 space-y-2">
-            {keys.map((k) => {
-              const ok = helping.includes(k);
-              return (
-                <label
-                  key={k}
-                  className={`flex items-start gap-3 rounded-xl border px-3 py-2.5 text-sm ${
-                    ok
-                      ? "cursor-pointer border-slate-200 has-[:checked]:border-[#1F7A7A] dark:border-slate-700"
-                      : "border-dashed border-slate-200 text-slate-400 dark:border-slate-700"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    disabled={!ok}
-                    checked={chosen.includes(k)}
-                    onChange={(e) =>
-                      setPicked(
-                        e.target.checked ? [...chosen, k] : chosen.filter((x) => x !== k),
-                      )
-                    }
-                    className="mt-0.5 h-4 w-4 text-[#1F7A7A]"
-                  />
-                  <span>
-                    <span className="font-semibold">{ADJUSTMENTS[k].ask[locale]}</span>
-                    <span className="block text-xs">
-                      {ok
-                        ? `${ADJUSTMENTS[k].tool[locale]} · ${evidenceLine(passport.evidence[k]!, locale)}`
-                        : ar
-                          ? "لا دليل كافٍ — لا يُقترح"
-                          : "No clear evidence — not proposed"}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm dark:bg-slate-800">
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-            {ar ? `ما سيراه ${instructor}` : `Exactly what ${instructor} will see`}
-          </p>
-          {chosen.length ? (
-            <ul className="mt-2 list-disc space-y-1 ps-5">
-              {chosen.map((k) => (
-                <li key={k}>
-                  {ADJUSTMENTS[k].ask[locale]}{" "}
-                  <span className="text-slate-500">({evidenceLine(passport.evidence[k]!, locale)})</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-2 text-slate-500">{ar ? "لم تختر شيئاً." : "Nothing selected."}</p>
-          )}
-          <p className="mt-2 text-xs text-slate-500">
-            {ar
-              ? "لا إجاباتك، ولا نتائجك الأخرى، ولا أي تشخيص."
-              : "Not your answers, not your other results, never a diagnosis."}
-          </p>
+      ) : (
+        <div className="mt-8 space-y-4">
+          {active.map((s) => (
+            <article
+              key={s.id}
+              className="lift flex gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+            >
+              <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-sm border border-slate-200 bg-slate-50">
+                <Image
+                  src={STUDENT_PROFILE.photoSrc}
+                  alt={passport.studentName}
+                  fill
+                  className="object-cover object-top"
+                  sizes="64px"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--sanad-sea)]">
+                  {s.course}
+                </p>
+                <h2 className="mt-1 text-xl font-bold text-[var(--sanad-indigo)] dark:text-[#E8ECF8]">
+                  {passport.studentName}
+                </h2>
+                <ul className="mt-3 space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                  {passport.evidence.map((e) => (
+                    <li key={e.tool}>
+                      {(ar ? e.labelAr : e.labelEn)}
+                      {e.deltaPct !== null
+                        ? `: ${e.deltaPct > 0 ? "+" : ""}${e.deltaPct}%`
+                        : ""}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-slate-400">
+                  {ar ? "رمز المشاركة" : "Share code"}:{" "}
+                  <span className="font-mono">{s.code}</span>
+                </p>
+                {s.response ? (
+                  <p className="pop mt-4 text-sm font-semibold text-[var(--sanad-sea)]" role="status">
+                    {s.response === "accepted"
+                      ? ar
+                        ? "✓ قبلتَ التعديل — أُبلغت الطالبة."
+                        : "✓ You accepted — the student has been told."
+                      : ar
+                        ? "💬 طلبتَ نقاشاً أولاً — أُبلغت الطالبة."
+                        : "💬 You asked to talk first — the student has been told."}
+                  </p>
+                ) : (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      className="!bg-[var(--sanad-indigo)]"
+                      onClick={() => respondShare(s.id, true)}
+                    >
+                      {ar
+                        ? "قبول تعديل مرن (تجريبي)"
+                        : "Accept flexible adjustment (pilot)"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => respondShare(s.id, false)}
+                    >
+                      {ar ? "لنتحدث أولاً" : "Let’s talk first"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </article>
+          ))}
         </div>
-
-        <Button
-          type="button"
-          className="mt-4"
-          disabled={!chosen.length}
-          onClick={() => sharePassport(course, chosen)}
-        >
-          {ar ? `شارك مع ${course}` : `Share for ${course}`}
-        </Button>
-      </section>
-
-      {shares.length ? (
-        <section className="mt-8">
-          <h2 className="text-lg font-bold text-[#0F3D3E] dark:text-[#E8F0EF]">
-            {ar ? "مشاركاتي" : "My shares"}
-          </h2>
-          <ul className="stagger mt-3 space-y-3">
-            {shares.map((s) => (
-              <ShareRow key={s.id} share={s} locale={locale} onRevoke={() => revokeShare(s.id)} />
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <label className="mt-8 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-4 text-sm dark:border-white/10 dark:bg-slate-900/70">
-        <input
-          type="checkbox"
-          checked={passport.contribute}
-          onChange={(e) => setContribute(e.target.checked)}
-          className="mt-0.5 h-4 w-4 text-[#1F7A7A]"
-        />
-        <span>
-          <span className="font-semibold">
-            {ar ? "ساهم دون كشف هويتك في خريطة العوائق" : "Contribute anonymously to the Barrier Map"}
-          </span>
-          <span className="mt-0.5 block text-slate-500">
-            {ar
-              ? "تُحتسب النتائج فقط في مجموعات من 10 أو أكثر، لإصلاح عوائق المقررات للجميع. متوقف افتراضياً."
-              : "Counted only in groups of 10 or more, to fix course barriers for everyone. Off by default."}
-          </span>
-        </span>
-      </label>
-
-      <Link href="/check-in" className="mt-6 inline-block text-sm font-semibold text-[#1F7A7A] dark:text-[#4DB3B0]">
-        {ar ? "أضف جلسة تسجيل أخرى" : "Add another Check-in session"} →
-      </Link>
+      )}
     </div>
-  );
-}
-
-function Bar({ label, value, strong }: { label: string; value: number | null; strong?: boolean }) {
-  const pct = Math.round((value ?? 0) * 100);
-  return (
-    <div className="mt-2 grid grid-cols-[4rem_1fr_2.5rem] items-center gap-2 text-xs">
-      <span className="text-white/80">{label}</span>
-      <span className="h-2 overflow-hidden rounded-full bg-white/15">
-        <span
-          className={`grow-x block h-full rounded-full transition-[width] duration-700 ${strong ? "bg-[#9FD9D6]" : "bg-white/45"}`}
-          style={{ width: `${pct}%` }}
-        />
-      </span>
-      <span className="text-end font-semibold tabular-nums">{value === null ? "—" : `${pct}%`}</span>
-    </div>
-  );
-}
-
-function ShareRow({
-  share,
-  locale,
-  onRevoke,
-}: {
-  share: PassportShare;
-  locale: Locale;
-  onRevoke: () => void;
-}) {
-  const ar = locale === "ar";
-  return (
-    <li className="rounded-2xl border border-slate-200/80 bg-white/90 shadow-soft p-4 text-sm dark:border-white/10 dark:bg-slate-900/70">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-bold">
-          {share.course} · {share.instructor}
-        </p>
-        <p className="text-xs text-slate-400">
-          <Time iso={share.respondedAt ?? share.createdAt} locale={locale} />
-        </p>
-      </div>
-      <p className="mt-1 text-slate-600 dark:text-slate-300">
-        {share.adjustments.map((k) => ADJUSTMENTS[k].ask[locale]).join(" · ")}
-      </p>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold" role="status">
-          {SHARE_STATUS[share.status][locale]}
-        </p>
-        {share.status !== "revoked" ? (
-          <button
-            type="button"
-            onClick={onRevoke}
-            className="text-xs font-semibold text-rose-700 underline-offset-2 hover:underline dark:text-rose-300"
-          >
-            {ar ? "اسحب المشاركة" : "Revoke access"}
-          </button>
-        ) : null}
-      </div>
-    </li>
   );
 }

@@ -24,19 +24,19 @@ const STEPS: Step[] = [
     role: "student",
     href: "/check-in",
     title: "Student takes the Check-in",
-    cue: "Skip one reading question, turn on Text-to-speech for the Tool trial → “Text-to-speech helped you” → Talk to a learning coach.",
+    cue: "Camera off. Use Read aloud → strategies → Saved for me (opens Learning Passport) or Talk to a coach.",
   },
   {
     role: "student",
     href: "/passport",
     title: "Learning Passport, not a diagnosis",
-    cue: "Evidence of what works: with vs without. Pick ENG 101 → “Exactly what Dr. Sara Khan will see” → Share.",
+    cue: "Evidence of what works: with vs without. Share with ENG 101 → share code. Revocable any time.",
   },
   {
     role: "faculty",
-    href: "/adjustments",
+    href: "/passport",
     title: "Instructor accepts in one click",
-    cue: "No diagnosis attached — none needed. Accept adjustment. Weeks of paperwork → one click.",
+    cue: "Shared Passport, no diagnosis attached — none needed. Accept flexible adjustment (pilot): weeks of paperwork → one click.",
   },
   {
     role: "advisor",

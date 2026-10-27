@@ -37,7 +37,7 @@ Use the header role switcher (or `/role`):
 | Role | Start at |
 | --- | --- |
 | Student | `/check-in`, `/passport`, `/my-case` |
-| Faculty | `/concern`, `/adjustments`, `/barriers` |
+| Faculty | `/concern`, `/passport` (shared Passports), `/barriers` |
 | Advisor / SAS | `/cases` |
 | Leadership | `/dashboard`, `/barriers` |
 
@@ -48,9 +48,9 @@ Language toggle (EN/AR + RTL) and dark mode are in the header.
 Story: **diagnose the barrier, not the student** (see [`docs/IDEAS.md`](docs/IDEAS.md)).
 
 1. Faculty → Concern Desk → Language Guard → recommend Check-in to class  
-2. Student → Check-in → Text-to-speech helped → Talk to a coach  
-3. Student → Learning Passport → share ENG 101 (exactly what the instructor sees)  
-4. Faculty → Adjustments → accept in one click (no diagnosis needed)  
+2. Student → Check-in (camera off) → Read aloud → strategies → Saved for me  
+3. Student → Learning Passport → with vs without evidence → share ENG 101 (code)  
+4. Faculty → Passport → shared evidence → accept flexible adjustment in one click  
 5. Advisor → Cases → AI suggests, human decides · Privacy Lens  
 6. Leadership → Barrier Map → Apply fix → referrals and SAS wait drop  
 7. Close → `/principles`
@@ -78,11 +78,10 @@ Map* that fixes obstacles for everyone. See [`docs/IDEAS.md`](docs/IDEAS.md).
 
 - `/` welcome  
 - `/role` role picker  
-- `/check-in` Learning Check-in (7 activities)  
+- `/check-in` Learning Check-in  
 - `/concern` Concern Desk + Language Guard  
 - `/cases` Case Hub  
-- `/passport` Learning Passport (student-owned evidence, share / revoke per course)  
-- `/adjustments` Faculty: passport-based adjustment requests  
+- `/passport` Learning Passport — student: evidence + share / revoke per course; faculty: shared Passports + accept / “let's talk first”  
 - `/barriers` Barrier Map (course × week) + Apply fix simulation  
 - `/my-case` Student tracker + recourse  
 - `/dashboard` Outcomes & Equity  

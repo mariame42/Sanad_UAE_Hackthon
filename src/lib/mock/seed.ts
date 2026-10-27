@@ -1,22 +1,10 @@
-import type { CaseRecord, Concern, LearningPassport } from "@/lib/types";
+import type { CaseRecord, Concern } from "@/lib/types";
 
 function hoursAgo(h: number) {
   return new Date(Date.now() - h * 3_600_000).toISOString();
 }
 
 export const seedConcerns: Concern[] = [];
-
-/** Layla has two earlier Check-ins; today's demo session adds to this evidence. */
-export const seedPassport: LearningPassport = {
-  sessions: 2,
-  updatedAt: hoursAgo(24 * 12),
-  evidence: {
-    tts: { with: [5, 6], without: [8, 13] },
-    untimed: { with: [14, 17], without: [1, 2] },
-    spacing: { with: [3, 5], without: [10, 14] },
-  },
-  contribute: false,
-};
 
 /** Layla (the demo student) starts with no case — the demo creates it live. */
 export const seedCases: CaseRecord[] = [
