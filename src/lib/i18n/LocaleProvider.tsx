@@ -6,8 +6,9 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
+import { createPersistentStore } from "@/lib/mock/persist";
 import { getDictionary, type Dictionary } from "./dictionaries";
 import type { Locale } from "@/lib/types";
 
@@ -21,23 +22,26 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+const localeStore = createPersistentStore<Locale>("sanad-locale-v2", "en");
 
-  useEffect(() => {
-    const stored = localStorage.getItem("sanad-locale") as Locale | null;
-    if (stored === "en" || stored === "ar") setLocaleState(stored);
-  }, []);
+export function LocaleProvider({ children }: { children: React.ReactNode }) {
+  const stored = useSyncExternalStore(
+    localeStore.subscribe,
+    localeStore.get,
+    localeStore.getServer,
+  );
+  const locale: Locale = stored === "ar" ? "ar" : "en";
 
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+    // Plain value read by the pre-hydration script in the root layout.
     localStorage.setItem("sanad-locale", locale);
   }, [locale]);
 
-  const setLocale = useCallback((next: Locale) => setLocaleState(next), []);
+  const setLocale = useCallback((next: Locale) => localeStore.set(next), []);
   const toggleLocale = useCallback(
-    () => setLocaleState((prev) => (prev === "en" ? "ar" : "en")),
+    () => localeStore.set((prev) => (prev === "en" ? "ar" : "en")),
     [],
   );
 

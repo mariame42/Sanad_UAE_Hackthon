@@ -4,10 +4,10 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
+import { createPersistentStore } from "@/lib/mock/persist";
 import { PERSONAS } from "./config";
 import type { Role } from "@/lib/types";
 
@@ -19,26 +19,18 @@ type RoleContextValue = {
 
 const RoleContext = createContext<RoleContextValue | null>(null);
 
+/** Per-tab (sessionStorage) so two windows can demo two roles side by side. */
+const roleStore = createPersistentStore<Role>("sanad-role", "student", "session");
+
 export function RoleProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<Role>("student");
+  const stored = useSyncExternalStore(
+    roleStore.subscribe,
+    roleStore.get,
+    roleStore.getServer,
+  );
+  const role: Role = stored in PERSONAS ? stored : "student";
 
-  useEffect(() => {
-    const stored = localStorage.getItem("sanad-role") as Role | null;
-    if (
-      stored === "student" ||
-      stored === "faculty" ||
-      stored === "advisor" ||
-      stored === "sas" ||
-      stored === "leadership"
-    ) {
-      setRoleState(stored);
-    }
-  }, []);
-
-  const setRole = useCallback((next: Role) => {
-    setRoleState(next);
-    localStorage.setItem("sanad-role", next);
-  }, []);
+  const setRole = useCallback((next: Role) => roleStore.set(next), []);
 
   const personaName = useCallback(
     (locale: "en" | "ar") =>

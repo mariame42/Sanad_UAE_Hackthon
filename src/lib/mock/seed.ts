@@ -1,32 +1,39 @@
 import type { CaseRecord, Concern } from "@/lib/types";
 
+function hoursAgo(h: number) {
+  return new Date(Date.now() - h * 3_600_000).toISOString();
+}
+
 export const seedConcerns: Concern[] = [];
 
+/** Layla (the demo student) starts with no case — the demo creates it live. */
 export const seedCases: CaseRecord[] = [
   {
     id: "case-1001",
-    studentName: "Layla Al Mansoori",
-    studentId: "stu-layla",
+    studentName: "Mariam Al Hashimi",
+    studentId: "stu-mariam",
     ladder: "L2",
     status: "with_advisor",
     owner: null,
     slaHours: 48,
     source: "checkin",
+    consent: "coach",
     summary:
-      "Student completed Check-in. Text-to-speech improved accuracy on reading questions. Requested learning coach.",
+      "Completed Check-in. Text-to-speech improved accuracy on reading questions. Requested a learning coach.",
     suggestedRoute: "learning_center",
     suggestedReason:
       "Pattern relates to reading load and tools, not a language-of-instruction issue. Learning center can coach strategies first.",
     confirmedRoute: null,
     handoffs: [
       {
-        at: "2026-03-01T09:00:00Z",
+        at: hoursAgo(20),
         from: "System",
         to: "Advising queue",
         note: "Student chose Talk to a coach after Check-in.",
       },
     ],
-    createdAt: "2026-03-01T09:00:00Z",
+    audit: [],
+    createdAt: hoursAgo(20),
   },
   {
     id: "case-1002",
@@ -37,6 +44,7 @@ export const seedCases: CaseRecord[] = [
     owner: "Omar Al Nuaimi",
     slaHours: 72,
     source: "concern",
+    consent: "coach",
     summary:
       "Faculty noted difficulty with timed reading weeks 3–5; strong oral contributions. Support offer accepted.",
     suggestedRoute: "language_support",
@@ -45,19 +53,79 @@ export const seedCases: CaseRecord[] = [
     confirmedRoute: "language_support",
     handoffs: [
       {
-        at: "2026-02-20T11:00:00Z",
+        at: hoursAgo(70),
         from: "Dr. Sara Khan",
         to: "Omar Al Nuaimi",
         note: "Support offer via Concern Desk.",
       },
       {
-        at: "2026-02-21T08:30:00Z",
+        at: hoursAgo(52),
         from: "Omar Al Nuaimi",
         to: "Language Support",
         note: "Route confirmed by advisor.",
       },
     ],
-    createdAt: "2026-02-20T11:00:00Z",
+    audit: [],
+    createdAt: hoursAgo(70),
+  },
+  {
+    id: "case-1003",
+    studentName: "Hessa Al Ketbi",
+    studentId: "stu-hessa",
+    ladder: "L2",
+    status: "offer_sent",
+    owner: null,
+    slaHours: 48,
+    source: "concern",
+    summary:
+      "Lab reports in BIO 210 submitted late three weeks in a row; asks good questions in lab.",
+    suggestedRoute: "academic_advising",
+    suggestedReason:
+      "Frontline observation created a support offer. Advisor should confirm the best next service with the student.",
+    confirmedRoute: null,
+    handoffs: [
+      {
+        at: hoursAgo(55),
+        from: "Dr. Khalid Rahman",
+        to: "Advising queue",
+        note: "Support offer from Concern Desk.",
+      },
+    ],
+    audit: [],
+    createdAt: hoursAgo(55),
+  },
+  {
+    id: "case-1004",
+    studentName: "Yousef Al Shamsi",
+    studentId: "stu-yousef",
+    ladder: "L3",
+    status: "with_sas",
+    owner: "Noura Hassan (SAS)",
+    slaHours: 72,
+    source: "checkin",
+    consent: "sas",
+    summary:
+      "Pattern persisted after six weeks of learning-center coaching. Student asked SAS to review.",
+    suggestedRoute: "sas",
+    suggestedReason:
+      "Student consented to SAS review after trying support. A qualified human must confirm.",
+    confirmedRoute: "sas",
+    handoffs: [
+      {
+        at: hoursAgo(30),
+        from: "Learning Center",
+        to: "SAS queue",
+        note: "Student consented to SAS review.",
+      },
+      {
+        at: hoursAgo(26),
+        from: "SAS queue",
+        to: "Noura Hassan (SAS)",
+        note: "Owner assigned.",
+      },
+    ],
+    audit: [],
+    createdAt: hoursAgo(30),
   },
 ];
 
@@ -93,6 +161,20 @@ export const dashboardSeries = {
     { group: "Campus B", days: 3.9, n: 22 },
     { group: "Tiny cohort (hidden)", days: 2.0, n: 4 },
   ],
+  demand: [
+    { service: "Learning Center", requests: 64, capacity: 70 },
+    { service: "Language Support", requests: 31, capacity: 35 },
+    { service: "SAS", requests: 22, capacity: 18 },
+    { service: "Counseling", requests: 15, capacity: 20 },
+  ],
+};
+
+/** Pilot KPIs from the project brief (section 9). */
+export const pilotTargets = {
+  medianDaysToSupport: 5,
+  appropriatenessPct: 80,
+  trustScore: 4,
+  checkinCompletionPct: 25,
 };
 
 export const classInsightsData = [
@@ -113,4 +195,6 @@ export const classInsightsData = [
   },
 ];
 
-export const sasCapacityFull = false;
+/** Demo shows the honest-wait path: SAS demand exceeds capacity this term. */
+export const sasCapacityFull = true;
+export const sasWaitDays = 9;

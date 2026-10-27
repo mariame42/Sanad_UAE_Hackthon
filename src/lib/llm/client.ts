@@ -43,21 +43,6 @@ export async function chatCompletion(messages: LlmMessage[]): Promise<string> {
   return content;
 }
 
-export function languageGuardFallback(raw: string, locale: "en" | "ar"): string {
-  const cleaned = raw
-    .replace(/dyslexic|dyslexia|ADHD|autistic|disabled|stupid|lazy/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (locale === "ar") {
-    return `ملاحظة سلوكية دون تشخيص: صعوبة في مهام القراءة المحددة بوقت خلال الأسابيع الأخيرة؛ مشاركات شفوية قوية. النص الأصلي بعد التنظيف: ${cleaned || "صعوبة ملحوظة في مهمة قراءة محددة بوقت."}`;
-  }
-
-  return `Observable note (non-diagnostic): difficulty with timed reading tasks in recent weeks; strong oral contributions in class. Cleaned from staff note: ${
-    cleaned || "Difficulty observed on a timed reading task."
-  }`;
-}
-
 export function routeSuggestFallback(summary: string): {
   route: string;
   reason: string;

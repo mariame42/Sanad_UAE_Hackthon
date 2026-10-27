@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import {
-  chatCompletion,
-  languageGuardFallback,
-  routeSuggestFallback,
-} from "@/lib/llm/client";
+import { rewriteFallback } from "@/lib/language-guard";
+import { chatCompletion, routeSuggestFallback } from "@/lib/llm/client";
 
 type Body = {
   action: "language_guard" | "route_suggest" | "handoff_summary";
   text?: string;
   locale?: "en" | "ar";
   summary?: string;
+  context?: { course?: string; task?: string; when?: string };
 };
 
 /**
@@ -38,15 +36,18 @@ export async function POST(request: Request) {
             role: "system",
             content:
               locale === "ar"
-                ? "أنت حارس لغة لسند. أعد صياغة ملاحظات الموظفين إلى وقائع ملاحظة فقط. لا تشخيص، لا إعاقة، لا درجات خطر. أجب بجملة أو جملتين بالعربية."
-                : "You are Sanad Language Guard. Rewrite staff notes into observable facts only. Never diagnose, never name a disability, never invent a risk score. Reply in 1-2 English sentences.",
+                ? "أنت حارس لغة لسند. أعد صياغة ملاحظات الموظفين إلى وقائع ملاحظة فقط: ماذا لوحظ، متى، وفي أي مهمة. احذف أي تشخيص أو تسمية إعاقة أو حكم على الشخصية. لا تخترع وقائع غير موجودة. أجب بجملة أو جملتين بالعربية دون مقدمات."
+                : "You are Sanad Language Guard. Rewrite the staff note into observable facts only: what was seen, when, in which task. Remove any diagnosis, disability name, mental-health term or character judgement (e.g. lazy). Never invent facts that are not in the note. Reply with 1-2 English sentences, no preamble.",
           },
-          { role: "user", content: raw },
+          {
+            role: "user",
+            content: `Course: ${body.context?.course ?? "-"}\nTask: ${body.context?.task ?? "-"}\nWhen: ${body.context?.when ?? "-"}\nNote: ${raw}`,
+          },
         ]);
         return NextResponse.json({ rewritten, source: "llm" });
       } catch {
         return NextResponse.json({
-          rewritten: languageGuardFallback(raw, locale),
+          rewritten: rewriteFallback(raw, body.context ?? {}, locale),
           source: "fallback",
         });
       }
@@ -63,7 +64,8 @@ export async function POST(request: Request) {
           },
           { role: "user", content: summary },
         ]);
-        const parsed = JSON.parse(raw) as { route?: string; reason?: string };
+        const json = raw.replace(/^```(?:json)?\s*|\s*```$/g, "");
+        const parsed = JSON.parse(json) as { route?: string; reason?: string };
         if (parsed.route && parsed.reason) {
           return NextResponse.json({ ...parsed, source: "llm" });
         }
@@ -81,7 +83,8 @@ export async function POST(request: Request) {
           {
             role: "system",
             content:
-              "Write a minimal handoff summary for the next support owner. Observable facts only. No diagnosis. Max 3 sentences.",
+              "Write a minimum-necessary handoff summary for the next support owner. Include only: what was observed, what was already tried, what the student asked for. Exclude names of classmates, grades, health information and any diagnosis or label. Max 3 sentences." +
+              (locale === "ar" ? " Reply in Arabic." : ""),
           },
           { role: "user", content: summary },
         ]);
@@ -89,8 +92,9 @@ export async function POST(request: Request) {
       } catch {
         return NextResponse.json({
           summary:
-            summary.slice(0, 280) ||
-            "Student requested support. Please review with consent and confirm next step.",
+            locale === "ar"
+              ? `طلب الطالب الدعم ووافق على مشاركة هذا الملخص. ما لوحظ: ${summary.slice(0, 220) || "صعوبة في مهام محددة"}. لا يتضمن أي تشخيص؛ الخطوة التالية تُتفق مع الطالب.`
+              : `Student requested support and consented to share this summary. Observed: ${summary.slice(0, 220) || "difficulty with specific tasks"}. No diagnosis implied; next step to be agreed with the student.`,
           source: "fallback",
         });
       }
