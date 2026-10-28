@@ -162,19 +162,21 @@ export async function exportPassportPdf(passport: LearningPassport) {
   doc.line(marginX, y, marginX + 180, y);
   y += 20;
 
-  const boxW = (contentW - 16) / 3;
+  const cols = Math.min(5, Math.max(1, passport.formats.length));
+  const gap = 6;
+  const boxW = (contentW - gap * (cols - 1)) / cols;
   passport.formats.forEach((f, i) => {
-    const x = marginX + i * (boxW + 8);
+    const x = marginX + i * (boxW + gap);
     doc.setDrawColor(...LINE);
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(x, y, boxW, 52, 4, 4, "FD");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    doc.setFontSize(6);
     doc.setTextColor(...GOLD);
-    doc.text(f.format.toUpperCase(), x + 12, y + 18);
+    doc.text(f.format.toUpperCase(), x + 8, y + 18);
     doc.setTextColor(...INDIGO);
-    doc.setFontSize(18);
-    doc.text(pct(f.pct), x + 12, y + 40);
+    doc.setFontSize(14);
+    doc.text(pct(f.pct), x + 8, y + 40);
   });
   y += 72;
 

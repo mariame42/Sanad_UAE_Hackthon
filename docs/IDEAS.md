@@ -99,7 +99,7 @@ pain point that SAS demand exceeds capacity.
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Evidence model | `src/lib/passport.ts` | `buildPassportEvidence()`: accuracy with vs without each tool, plus text / audio / video formats |
+| Evidence model | `src/lib/passport.ts` | `buildPassportEvidence()`: accuracy with vs without each tool, plus text / audio / video / numbers / trace formats |
 | Passport data | `MockStoreProvider` | Rebuilt from Check-in attempts (any consent except “private”); shares carry a code |
 | Passport UI | `/passport` | Student card with photo, evidence, formats; share per course with code; revoke |
 | Faculty view | `/passport` (faculty role) | Only active shares; accept / “let's talk first”; the student sees the answer |

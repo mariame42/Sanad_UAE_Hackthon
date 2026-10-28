@@ -121,7 +121,7 @@ export type PassportEvidence = {
 };
 
 export type PassportFormatEvidence = {
-  format: "text" | "audio" | "video";
+  format: "text" | "audio" | "video" | "numbers" | "trace";
   pct: number | null;
 };
 
@@ -137,7 +137,12 @@ export type PassportShare = {
 };
 
 /** What the student was doing while the camera measured focus. */
-export type FocusPart = "text" | "video" | "questions";
+export type FocusPart =
+  | "text"
+  | "video"
+  | "numbers"
+  | "trace"
+  | "questions";
 
 /** Camera focus measurements from one Check-in (computed in the browser; no video kept). */
 export type FocusSummary = {

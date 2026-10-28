@@ -297,7 +297,7 @@ export function PassportView() {
                   <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-[#8a6d1f]">
                     {t.passport.formatsTitle}
                   </h3>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                     {passport.formats.map((f) => (
                       <div
                         key={f.format}
@@ -309,6 +309,8 @@ export function PassportView() {
                               text: ar ? "نص" : "Text",
                               audio: ar ? "صوت" : "Audio",
                               video: ar ? "فيديو" : "Video",
+                              numbers: ar ? "أعداد" : "Numbers",
+                              trace: ar ? "تتبع" : "Trace",
                             }[f.format]
                           }
                         </p>

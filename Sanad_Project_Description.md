@@ -58,8 +58,9 @@ never operate above L1.
 
 ### A. Learning Check-in (student-facing, R3 and the silent beneficiary)
 
-A short interactive activity: the same content as text, audio and video,
-with a few questions after each part. Students can toggle tools such as
+A short interactive activity: content as text, audio and video, plus a
+number-sense check and a follow-the-dots hand-path check, with questions
+after each content part. Students can toggle tools such as
 text-to-speech, wider spacing, a dyslexia-friendly font and chunking.
 
 The core works without a camera. Insights come from how answers change
@@ -323,7 +324,7 @@ Leadership) and mock data.
 
 | --- \| --- \| --- \|
 
-| 1 \| Check-in: 3 short blocks (text / audio / video) + questions +
+| 1 \| Check-in: text / audio / video / numbers / trace + questions +
   results screen with strategies + choice "keep private / coach / SAS"
   \| Fully working \|
 

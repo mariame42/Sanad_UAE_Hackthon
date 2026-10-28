@@ -72,16 +72,22 @@ export function buildPassportEvidence(
 export function buildPassportFormats(
   attempts: CheckInAttempt[],
 ): PassportFormatEvidence[] {
-  const map: Record<"text" | "audio" | "video", (a: CheckInAttempt) => boolean> =
-    {
-      text: (a) => a.id === "read",
-      audio: (a) => a.tools.tts,
-      video: (a) => a.id === "watch",
-    };
-  return (["text", "audio", "video"] as const).map((format) => ({
-    format,
-    pct: pct(accuracy(attempts.filter(map[format]))),
-  }));
+  const map: Record<
+    "text" | "audio" | "video" | "numbers" | "trace",
+    (a: CheckInAttempt) => boolean
+  > = {
+    text: (a) => a.id === "read",
+    audio: (a) => a.tools.tts,
+    video: (a) => a.id === "watch",
+    numbers: (a) => a.id === "numbers",
+    trace: (a) => a.id === "trace",
+  };
+  return (["text", "audio", "video", "numbers", "trace"] as const).map(
+    (format) => ({
+      format,
+      pct: pct(accuracy(attempts.filter(map[format]))),
+    }),
+  );
 }
 
 export function shareCode(studentId: string, course: string) {

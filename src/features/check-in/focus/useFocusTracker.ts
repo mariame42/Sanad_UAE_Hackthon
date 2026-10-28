@@ -170,6 +170,8 @@ function mulberry32(seed: number) {
 const MOCK_STRETCH: Record<ReturnType<typeof partOf>, [number, number]> = {
   text: [5, 13],
   video: [14, 28],
+  numbers: [7, 16],
+  trace: [6, 14],
   questions: [8, 18],
 };
 

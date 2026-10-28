@@ -1,10 +1,10 @@
 "use client";
 
-import { JOURNEY_STEPS, type ModeId } from "./content";
+import { JOURNEY_STEPS, type JourneyId } from "./content";
 
 type Props = {
   locale: "en" | "ar";
-  current: ModeId | "tools";
+  current: JourneyId;
   completed: Set<string>;
 };
 

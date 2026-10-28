@@ -20,7 +20,10 @@ export const emptySegment = (): SegmentStats => ({
 export function partOf(segment: string): FocusPart {
   const [activity, stage] = segment.split(":");
   if (stage === "questions") return "questions";
-  return activity === "watch" ? "video" : "text";
+  if (activity === "watch") return "video";
+  if (activity === "numbers") return "numbers";
+  if (activity === "trace") return "trace";
+  return "text";
 }
 
 /** Ignore parts with less than this much camera time — too short to say anything. */
@@ -40,7 +43,9 @@ export function summarize(
     byPart.set(part, acc);
   }
 
-  const parts = (["text", "video", "questions"] as const)
+  const parts = (
+    ["text", "video", "numbers", "trace", "questions"] as const
+  )
     .map((part) => ({ part, s: byPart.get(part) }))
     .filter((p): p is { part: FocusPart; s: SegmentStats } =>
       Boolean(p.s && p.s.trackedMs >= MIN_TRACKED_MS),
@@ -84,6 +89,8 @@ export function formatSec(sec: number) {
 export const PART_LABEL: Record<FocusPart, { en: string; ar: string }> = {
   text: { en: "Reading", ar: "القراءة" },
   video: { en: "Video", ar: "الفيديو" },
+  numbers: { en: "Numbers", ar: "الأعداد" },
+  trace: { en: "Trace", ar: "التتبع" },
   questions: { en: "Questions", ar: "الأسئلة" },
 };
 

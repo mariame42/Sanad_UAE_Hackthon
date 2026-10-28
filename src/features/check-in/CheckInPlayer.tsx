@@ -18,11 +18,13 @@ import {
   PASSAGE_TOPIC_EN,
   QUICK_IDS,
   type ActivityId,
+  type JourneyId,
   type ModeId,
 } from "./content";
 import { FocusOptIn, FocusPanel, FocusResults } from "./focus/FocusCamera";
 import { summarize } from "./focus/focusStats";
 import { useFocusTracker } from "./focus/useFocusTracker";
+import { DotTraceActivity } from "./DotTraceActivity";
 import { JourneyBar } from "./JourneyBar";
 import { QuestionBar } from "./QuestionBar";
 import { ReadingStage } from "./ReadingStage";
@@ -34,8 +36,8 @@ type ToolKey = "tts" | "spacing" | "dyslexiaFont" | "chunking";
 
 const ANALYZE_STEPS = [
   {
-    en: "Reading your answers across text, audio, and video…",
-    ar: "قراءة إجاباتك عبر النص والصوت والفيديو…",
+    en: "Reading your answers across text, audio, video, numbers, and trace…",
+    ar: "قراءة إجاباتك عبر النص والصوت والفيديو والأعداد والتتبع…",
   },
   {
     en: "Comparing results with tools on vs off…",
@@ -129,15 +131,19 @@ export function CheckInPlayer() {
 
   const ids = path === "quick" ? QUICK_IDS : FULL_IDS;
   const current = activities.find((a) => a.id === ids[index])!;
-  const journeyMode: ModeId | "tools" =
+  const journeyMode: JourneyId =
     phase === "results" ||
     phase === "consent" ||
     phase === "done" ||
     phase === "analyzing"
       ? "tools"
-      : isModeId(current.id)
-        ? current.id
-        : "read";
+      : current.id === "numbers"
+        ? "numbers"
+        : current.id === "trace"
+          ? "trace"
+          : isModeId(current.id)
+            ? current.id
+            : "read";
   const mode: ModeId = isModeId(current.id) ? current.id : "read";
   const focus = useFocusTracker(
     cameraOn && phase === "play",
@@ -173,6 +179,8 @@ export function CheckInPlayer() {
     ) {
       set.add("read");
       set.add("watch");
+      set.add("numbers");
+      set.add("trace");
     }
     return set;
   }, [ids, index, phase]);
@@ -238,12 +246,70 @@ export function CheckInPlayer() {
       });
     }
 
-    const formats = (["text", "audio", "video"] as const).map((f) => ({
+    const numbersAttempt = attempts.find((a) => a.id === "numbers");
+    if (numbersAttempt) {
+      const nAcc =
+        numbersAttempt.total > 0
+          ? numbersAttempt.correct / numbersAttempt.total
+          : 1;
+      if (nAcc < 0.7) {
+        strategies.push({
+          title: ar
+            ? "وقت إضافي وتمثيل بصري للأعداد قد يساعدانك"
+            : "Extra time and visual numbers may help you",
+          body: ar
+            ? `في تحقق الأعداد أجبت عن ${Math.round(nAcc * 100)}٪. جرّب خط أعداد أو مسودة أو وقتاً إضافياً في المهام الكمية — استراتيجيات، لا تشخيص.`
+            : `On the number check you got ${Math.round(nAcc * 100)}% right. Try a number line, scrap paper, or extra time on quantity tasks — strategies, not a diagnosis.`,
+        });
+      } else {
+        strategies.push({
+          title: ar ? "حس الأعداد لديك واضح اليوم" : "Your number sense looked solid today",
+          body: ar
+            ? `أجبت عن ${Math.round(nAcc * 100)}٪ في تحقق الأعداد. احتفظ بما يريحك إن ظهرت مهام كمية أصعب لاحقاً.`
+            : `You got ${Math.round(nAcc * 100)}% on the number check. Keep whatever pacing helps you if harder quantity tasks show up later.`,
+        });
+      }
+    }
+
+    const traceAttempt = attempts.find((a) => a.id === "trace");
+    if (traceAttempt) {
+      const tAcc =
+        traceAttempt.total > 0
+          ? traceAttempt.correct / traceAttempt.total
+          : 1;
+      if (tAcc < 0.7) {
+        strategies.push({
+          title: ar
+            ? "أهداف أكبر ووتيرة أهدأ قد تساعدانك في المهام اليدوية"
+            : "Larger targets and a calmer pace may help on hand tasks",
+          body: ar
+            ? `في تتبع النقاط أكملت ${Math.round(tAcc * 100)}٪ من المسارات بسلاسة. جرّب قلماً أو فأرة أكبر أو وقتاً إضافياً للكتابة والرسم — استراتيجيات، لا تشخيص.`
+            : `On follow-the-dots you completed ${Math.round(tAcc * 100)}% of paths smoothly. Try a stylus, a larger mouse, or extra time for writing and drawing — strategies, not a diagnosis.`,
+        });
+      } else {
+        strategies.push({
+          title: ar
+            ? "مسار يدك بدا سلساً اليوم"
+            : "Your hand path looked steady today",
+          body: ar
+            ? `أكملت ${Math.round(tAcc * 100)}٪ من مسارات النقاط بسلاسة. احتفظ بما يريحك إن ظهرت مهام يدوية أدق لاحقاً.`
+            : `You completed ${Math.round(tAcc * 100)}% of the dot paths smoothly. Keep whatever setup helps you if finer hand tasks show up later.`,
+        });
+      }
+    }
+
+    const formats = (
+      ["text", "audio", "video", "numbers", "trace"] as const
+    ).map((f) => ({
       format: f,
       acc: accuracy(
         f === "audio"
           ? attempts.filter((a) => a.tools.tts)
-          : attempts.filter((a) => FORMAT[a.id] === f),
+          : f === "numbers"
+            ? attempts.filter((a) => a.id === "numbers")
+            : f === "trace"
+              ? attempts.filter((a) => a.id === "trace")
+              : attempts.filter((a) => FORMAT[a.id] === f),
       ),
     }));
     const overall = accuracy(attempts) ?? 1;
@@ -317,15 +383,15 @@ export function CheckInPlayer() {
     setPlayStage("questions");
   }
 
-  function advanceFromActivity() {
+  function recordAndAdvance(correct: number, total: number) {
     window.speechSynthesis?.cancel();
     setPlaying(false);
     setAttempts((prev) => [
       ...prev.filter((a) => a.id !== current.id),
       {
         id: current.id,
-        correct: scoreActivity(current.id),
-        total: current.questions.length,
+        correct,
+        total,
         tools: { ...tools },
       },
     ]);
@@ -339,6 +405,14 @@ export function CheckInPlayer() {
     setQIndex(0);
     setPlayStage("content");
     setActiveChunk(0);
+  }
+
+  function advanceFromActivity() {
+    recordAndAdvance(scoreActivity(current.id), current.questions.length);
+  }
+
+  function advanceFromTrace(result: { correct: number; total: number }) {
+    recordAndAdvance(result.correct, result.total);
   }
 
   function nextQuestion() {
@@ -368,7 +442,10 @@ export function CheckInPlayer() {
     .filter(Boolean)
     .join(" ");
 
-  const partTotal = 2;
+  const partTotal = ids.filter(
+    (id) =>
+      id === "read" || id === "watch" || id === "numbers" || id === "trace",
+  ).length;
   const partNumber = Math.min(index + 1, partTotal);
   const partLabel =
     locale === "ar"
@@ -564,7 +641,7 @@ export function CheckInPlayer() {
               {insight.formats.map(({ format, acc }) => (
                 <li
                   key={format}
-                  className="grid grid-cols-[4.5rem_1fr_3rem] items-center gap-3 text-sm"
+                  className="grid grid-cols-[5.5rem_1fr_3rem] items-center gap-3 text-sm"
                 >
                   <span className="font-medium">
                     {
@@ -572,6 +649,8 @@ export function CheckInPlayer() {
                         text: ar ? "نص" : "Text",
                         audio: ar ? "صوت" : "Audio",
                         video: ar ? "فيديو" : "Video",
+                        numbers: ar ? "أعداد" : "Numbers",
+                        trace: ar ? "تتبع" : "Trace",
                       }[format]
                     }
                   </span>
@@ -701,7 +780,9 @@ export function CheckInPlayer() {
             />
           </div>
 
-          {playStage === "content" ? (
+          {current.id === "trace" ? (
+            <DotTraceActivity locale={locale} onComplete={advanceFromTrace} />
+          ) : playStage === "content" ? (
             <div className="space-y-4">
               {showReadingShell ? (
                 <ReadingStage

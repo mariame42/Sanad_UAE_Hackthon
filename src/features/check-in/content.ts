@@ -1,12 +1,17 @@
 export type ActivityId =
   | "read"
   | "watch"
+  | "numbers"
+  | "trace"
   | "timed"
   | "memory"
   | "visual_verbal"
   | "tool_trial";
 
 export type ModeId = "read" | "watch";
+
+/** Journey bar steps (content modes + tools). */
+export type JourneyId = ModeId | "numbers" | "trace" | "tools";
 
 export type Question = {
   id: string;
@@ -186,6 +191,51 @@ export const activities: Activity[] = [
     questions: [sharedQuestions[3], sharedQuestions[4], sharedQuestions[5]],
   },
   {
+    id: "numbers",
+    titleEn: "Number sense",
+    titleAr: "حس الأعداد",
+    bodyEn:
+      "A short number check — same idea as reading: what helps you with quantities, not a label about you. Take your time. You can use scrap paper if that feels easier.",
+    bodyAr:
+      "تحقق قصير من الأعداد — نفس فكرة القراءة: ما الذي يساعدك مع الكميات، لا تصنيف عنك. خذ وقتك. يمكنك استخدام ورقة مسودة إن سهّل ذلك.",
+    questions: [
+      {
+        id: "n1",
+        promptEn: "Which amount is larger?",
+        promptAr: "أي مقدار أكبر؟",
+        optionsEn: ["47", "74", "They are equal", "Cannot tell"],
+        optionsAr: ["47", "74", "متساويان", "لا يمكن التحديد"],
+        correctIndex: 1,
+      },
+      {
+        id: "n2",
+        promptEn: "You buy 3 packs. Each pack has 4 pens. How many pens in total?",
+        promptAr: "اشتريت 3 علب. كل علبة فيها 4 أقلام. كم قلماً في المجموع؟",
+        optionsEn: ["7", "12", "34", "43"],
+        optionsAr: ["7", "12", "34", "43"],
+        correctIndex: 1,
+      },
+      {
+        id: "n3",
+        promptEn: "In the number 352, what does the digit 5 stand for?",
+        promptAr: "في العدد 352، ماذا يمثل الرقم 5؟",
+        optionsEn: ["5 ones", "5 tens", "5 hundreds", "5 thousands"],
+        optionsAr: ["5 آحاد", "5 عشرات", "5 مئات", "5 آلاف"],
+        correctIndex: 1,
+      },
+    ],
+  },
+  {
+    id: "trace",
+    titleEn: "Follow the dots",
+    titleAr: "تتبع النقاط",
+    bodyEn:
+      "A short hand-path check — same idea as reading: what helps you draw or write more comfortably, not a label about you. Use a finger, mouse, or stylus.",
+    bodyAr:
+      "تحقق قصير لمسار اليد — نفس فكرة القراءة: ما الذي يساعدك على الرسم أو الكتابة براحة أكبر، لا تصنيف عنك. استخدم إصبعاً أو فأرة أو قلماً.",
+    questions: [],
+  },
+  {
     id: "timed",
     titleEn: "Timed word list",
     titleAr: "قائمة كلمات بوقت",
@@ -284,10 +334,12 @@ export const activities: Activity[] = [
   },
 ];
 
-export const QUICK_IDS: ActivityId[] = ["read", "watch"];
+export const QUICK_IDS: ActivityId[] = ["read", "watch", "numbers", "trace"];
 export const FULL_IDS: ActivityId[] = [
   "read",
   "watch",
+  "numbers",
+  "trace",
   "timed",
   "memory",
   "visual_verbal",
@@ -295,7 +347,7 @@ export const FULL_IDS: ActivityId[] = [
 ];
 
 export const JOURNEY_STEPS: {
-  id: ModeId | "tools";
+  id: JourneyId;
   labelEn: string;
   labelAr: string;
   hintEn: string;
@@ -314,6 +366,20 @@ export const JOURNEY_STEPS: {
     labelAr: "مشاهدة",
     hintEn: "About 3 minutes",
     hintAr: "نحو 3 دقائق",
+  },
+  {
+    id: "numbers",
+    labelEn: "Numbers",
+    labelAr: "أعداد",
+    hintEn: "About 2 minutes",
+    hintAr: "نحو دقيقتين",
+  },
+  {
+    id: "trace",
+    labelEn: "Trace",
+    labelAr: "تتبع",
+    hintEn: "About 2 minutes",
+    hintAr: "نحو دقيقتين",
   },
   {
     id: "tools",

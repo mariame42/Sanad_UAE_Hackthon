@@ -83,6 +83,8 @@ const seedPassport: LearningPassport = {
     { format: "text", pct: 67 },
     { format: "audio", pct: 88 },
     { format: "video", pct: 100 },
+    { format: "numbers", pct: 100 },
+    { format: "trace", pct: 67 },
   ],
   strategyTitles: ["Read aloud helped you", "One chunk at a time helped you"],
   shares: [],

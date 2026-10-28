@@ -5,7 +5,7 @@ const features = [
     n: "01",
     href: "/check-in",
     title: "Learning Check-in",
-    body: "Students try short learning activities and discover which tools help them learn better.",
+    body: "Students try text, audio, video, numbers, and trace — then see which tools help, without labels.",
     bg: "bg-[#F3EEF9] dark:bg-[#2A2438]",
     accent: "text-[#7B6BB0] dark:text-[#B5A4DE]",
     btn: "bg-[#C4B5E8] text-[#4A3D7A] hover:bg-[#B5A4DE] dark:bg-[#4A3D7A] dark:text-[#E8E0F8] dark:hover:bg-[#5A4D8A]",
